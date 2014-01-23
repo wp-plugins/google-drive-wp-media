@@ -1,5 +1,6 @@
 === Google Drive WP Media ===
 Contributors: Moch Amir
+Donate link: http://www.mochamir.com/
 Tags: google drive,google drive upload, google drive share, wp google drive, wp media, upload
 Requires at least: 1.5
 Tested up to: 3.8
