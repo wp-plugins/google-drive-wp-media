@@ -4,7 +4,7 @@ Donate link: http://www.mochamir.com/
 Tags: google drive,google drive upload, google drive share, wp google drive, wp media, upload
 Requires at least: 1.5
 Tested up to: 3.8
-Stable tag: 0.1
+Stable tag: 0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -36,6 +36,11 @@ Features:
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 0.2 =
+
+* Sanitize input text when creating folder
+* Error create folder missing argument fixed
 
 = 0.1 =
 * Initial release, it's a beta version.
