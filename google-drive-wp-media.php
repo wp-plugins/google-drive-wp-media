@@ -5,14 +5,14 @@ Plugin URI: http://www.mochamir.com/
 Description: Google Drive on Wordpress Media Publishing.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 0.1
+Version: 0.2
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
 
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
-define( 'VERSI_GDWPM', '0.1' );
+define( 'VERSI_GDWPM', '0.2' );
 define( 'GDWPM', 'gdwpm' );
 
 require_once 'google-api-php-client/src/Google_Client.php';
@@ -42,13 +42,13 @@ $service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_
 	{
 		if (!EMPTY($_POST['gdwpm_gawe_folder']))
 		{
-			$gawe_folder = preg_replace("/[^a-zA-Z0-9]+/", "", $_POST['gdwpm_gawe_folder']);
+			$gawe_folder = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdwpm_gawe_folder']);
 			$gawe_folder = sanitize_text_field($gawe_folder);
 			$folderId = $service->getFileIdByName( $gawe_folder );
 
 			if( ! $folderId ) {
 					$folderId = $service->createFolder( $gawe_folder );
-					$service->setPermissions( $folderId );
+					$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
 				echo '<div class="updated"><p>Great! Folder with name '.$gawe_folder.' successfuly created.</p></div>';
 			}else{
 				echo '<div class="error"><p>Folder '.$gawe_folder.' already exist</p></div>';
