@@ -1,13 +1,14 @@
 jQuery(document).ready(function($) {
-	$('#loading').hide();
-	$('#masuk_perpus').hide();
+	$('#gdwpm_loading_gbr').hide();
+	$('#gdwpm_masuk_perpus_teks').hide();
 	$('#gdwpm_add_to_media_gbr').hide();
     $("#golek_seko_folder").click(function(){
-        $("#loading").show();
-	$('.updated').empty();
+        $("#gdwpm_loading_gbr").show();
+	$('.sukses').empty();
+	$('.sukses').hide();
 	$('.updated').hide();
 		$('#hasil').empty();
-	$('#masuk_perpus').hide();
+	$('#gdwpm_masuk_perpus_teks').hide();
 		$('#hasil').hide();
 	var data = {
 		action: 'gdwpm_on_action',
@@ -15,16 +16,16 @@ jQuery(document).ready(function($) {
 	};
 	
 	jQuery.post(ajax_object.ajax_url, data, function(response) {
-		$("#loading").hide();
+		$("#gdwpm_loading_gbr").hide();
 		$('#hasil').show();
 		if(response.indexOf("radio") > 1){
-	$('#masuk_perpus').show();}
+	$('#gdwpm_masuk_perpus_teks').show();}
 	//alert('Got this from the server: ' + response);
 		$('#gdwpm_info_masuk_perpus').empty();
 		var $holder = $('<div/>').html(response);
-$('.updated').html($('.updated', $holder).html());
+$('.sukses').html($('.sukses', $holder).html());
 $('#hasil').html($('#hasil', $holder).html());
-	$('.updated').show();
+	$('.sukses').show();
 	$('#gdwpm_add_to_media_gbr').hide();
 		
 	});
