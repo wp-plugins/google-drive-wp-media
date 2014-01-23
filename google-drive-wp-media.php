@@ -276,9 +276,9 @@ if($cek_kunci == 'false'){ ?>
 				<p>Select folder: <?php echo $folderpil; ?> <button id="golek_seko_folder" name="golek_seko_folder" class="button-primary"><?php _e('Get Files') ?></button></p> 
 				<p><span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br />
 				Link URL of your file: https://docs.google.com/uc?id=<b>YOUR-FILE-ID-HERE</b>&export=view </span></p>		
-<div id="gdwpm_loading_gbr">
-  <center><img src="https://docs.google.com/uc?id=0B2Or6CnfqndYdXoyZEk5eFczTXc&export=view" /><br />Please wait...</center>
-</div><!-- 0B2Or6CnfqndYdXNET3pfamxFcGM  0B2Or6CnfqndYNHJlQUF1SWhlY2c 0B2Or6CnfqndYdmROcUNwQlNobU0 0B2Or6CnfqndYdXoyZEk5eFczTXc 0B2Or6CnfqndYZWlmZ3RZdmZrODA -->
+				<div id="gdwpm_loading_gbr">
+				  <center><img src="https://docs.google.com/uc?id=0B2Or6CnfqndYdXoyZEk5eFczTXc&export=view" /><br />Please wait...</center>
+				</div>
 				<div id="hasil"></div><div id="gdwpm_masuk_perpus_teks"><p>Pick a file to include it in the Media Library.</p>
 				<p><button id="gdwpm_berkas_masuk_perpus" name="gdwpm_berkas_masuk_perpus" class="button-primary">Add to Media Library</button>&nbsp;&nbsp;&nbsp; 
 				<span id="gdwpm_add_to_media_gbr"><img src="https://docs.google.com/uc?id=0B2Or6CnfqndYZUpXcmdOeGIxZU0&export=view" /></span>
@@ -286,7 +286,6 @@ if($cek_kunci == 'false'){ ?>
 				<?php
 echo $daftarfile;
 ?> 
-				</form>
 				<p></p> 
 			</div>
 			<div id="tabs-2">
@@ -442,9 +441,7 @@ $service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_
 		
         echo $daftarfile;
 }elseif(isset($_POST['masuk_perpus'])){
-	//$gdwpm_berkas_terpilih = array_values($_POST['masuk_perpus']);
 	$gdwpm_berkas_terpilih_arr = explode(' | ', $_POST['masuk_perpus']);
-	//		if(!empty($gdwpm_berkas_terpilih_arr[0]) && !empty($gdwpm_berkas_terpilih_arr[1]) && !empty($gdwpm_berkas_terpilih_arr[2]) && !empty($gdwpm_berkas_terpilih_arr[3])){
 	gdwpm_ijin_masuk_perpus(sanitize_mime_type($gdwpm_berkas_terpilih_arr[0]), $gdwpm_berkas_terpilih_arr[1], $gdwpm_berkas_terpilih_arr[2], $gdwpm_berkas_terpilih_arr[3]);
 			
 	echo '<strong>'.$gdwpm_berkas_terpilih_arr[1] . '</strong> has been added to your Media Library';
