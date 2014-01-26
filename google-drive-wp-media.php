@@ -5,15 +5,34 @@ Plugin URI: http://www.mochamir.com/
 Description: Google Drive on Wordpress Media Publishing.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 0.2
+Version: 0.3
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
 
+/*
+			  Copyright (c)2014 Moch Amir.
+
+			  This program is free software; you can redistribute it and/or modify
+			  it under the terms of the GNU General Public License as published by
+			  the Free Software Foundation; either version 2 of the License, or
+			  (at your option) any later version.
+
+			  This program is distributed in the hope that it will be useful,
+			  but WITHOUT ANY WARRANTY; without even the implied warranty of
+			  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+			  GNU General Public License for more details.
+
+			  You should have received a copy of the GNU General Public License
+			  along with this program; if not, write to the Free Software
+			  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
-define( 'VERSI_GDWPM', '0.2' );
-define( 'GDWPM', 'gdwpm' );
+define( 'VERSI_GDWPM', '0.3' );
+define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'google-api-php-client/src/Google_Client.php';
 require_once 'google-api-php-client/src/contrib/Google_DriveService.php';
@@ -57,43 +76,42 @@ $service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_
 			echo '<div class="error"><p>Folder name cannot be empty!</p></div>';
 		}
 	}
-if(isset($_FILES["gdwpm_aplod_file"]))
-{
-	echo '<script>$(\'#gdwpm_loading_gbr\').hide();	$(\'#gdwpm_masuk_perpus_teks\').hide();	$(\'#gdwpm_add_to_media_gbr\').hide();</script>';
-	if($_FILES["gdwpm_aplod_file"]["error"] > 0)
-	{
-		echo '<div class="error"><p>Oops.. Upload failed! error: '. $_FILES["gdwpm_aplod_file"]["error"] .'</p></div>';
-	}else{
-       $filename = $_FILES['gdwpm_aplod_file']['name'];
-       $path = $_FILES['gdwpm_aplod_file']['tmp_name'];
-       $mime_berkas = $_FILES['gdwpm_aplod_file']['type'];
-       //$mime_berkas = sanitize_mime_type($mime_berkas);
-		$folder_ortu = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdwpm_folder_anyar']);
-		$folder_ortu = sanitize_text_field($folder_ortu);
-		$folderId = $_POST['folder_pilian_aplod'];
-		if($folder_ortu != ''){
-			$folderId = $service->getFileIdByName( $folder_ortu );
-		}
-		$content = sanitize_text_field($_POST['gdwpm_aplod_deskrip']);
 
-		if( ! $folderId ) {
-				$folderId = $service->createFolder( $folder_ortu );
-				$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
-		}
+$gdwpm_override_optionval = get_option('gdwpm_override_dir_bawaan'); // cekbok, polder
+if($gdwpm_override_optionval[0] == 'checked' && !empty($gdwpm_override_optionval[1])){
+	add_filter('wp_handle_upload_prefilter', 'custom_upload_filter' );
 
-		$fileParent = new Google_ParentReference();
-		$fileParent->setId( $folderId );
-		$fileId = $service->createFileFromPath( $path, $filename, $content, $fileParent );
-		$service->setPermissions( $fileId, 'me', 'reader', 'anyone' );
-		$sukinfo = '';
-		if(!empty($mime_berkas) && isset($_POST['masukperpus'])){
-			gdwpm_ijin_masuk_perpus($mime_berkas, $filename, $fileId, $content);
-			$sukinfo = ' and added into your Media Library';
-		}
-		echo '<div class="updated"><p>Great! File <strong>'.$fileId.'</strong> successfuly uploaded'.$sukinfo.'.</p></div>';
+	function custom_upload_filter( $file ){
+		global $cek_kunci, $gdwpm_opt_akun, $service, $apiConfig, $gdwpm_override_optionval;
+		$filename = $file['name'];
+		   $path = $file['tmp_name'];
+		   $mime_berkas = $file['type'];
+		   //$mime_berkas = sanitize_mime_type($mime_berkas);
+			$folder_ortu = preg_replace("/[^a-zA-Z0-9]+/", " ", $gdwpm_override_optionval[1]);
+			$folder_ortu = sanitize_text_field($folder_ortu);
+			if($folder_ortu != ''){
+				$folderId = $service->getFileIdByName( $folder_ortu );
+			}
+			$content = '';
+
+			if( ! $folderId ) {
+					$folderId = $service->createFolder( $folder_ortu );
+					$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
+			}
+
+			$fileParent = new Google_ParentReference();
+			$fileParent->setId( $folderId );
+			$fileId = $service->createFileFromPath( $path, $filename, $content, $fileParent );
+			$service->setPermissions( $fileId, 'me', 'reader', 'anyone' );
+			$sukinfo = '';
+			if(!empty($mime_berkas)){// && isset($_POST['masukperpus'])){
+				gdwpm_ijin_masuk_perpus($mime_berkas, $filename, $fileId, $content);
+				$sukinfo = ' and added into your Media Library';
+			}
+			echo '<div class="updated"><p><strong>'.$fileId.'</strong> successfully uploaded into folder <strong>'.$folder_ortu.'</strong>'.$sukinfo.'.</p></div>';
+		exit();
 	}
-}
-
+} 
 //////////////// HALAMAN MEDIA MENU ///////////////
 add_action( 'admin_menu', 'gdwpm_menu_media' );
 function gdwpm_menu_media() {
@@ -121,17 +139,18 @@ function gdwpm_tab_media_upload($tabs) {
 }
 ////////////////////////// ADMIN SEKRIP ////////////////////////////////
 function gdwpm_sekrip_buat_mimin() {
-	wp_enqueue_script('jquery');                    // Enque jQuery http://codex.wordpress.org/Function_Reference/wp_register_script
-	wp_enqueue_script('jquery-ui-core');            // Enque jQuery UI Core
-	wp_enqueue_script('jquery-ui-accordion');            // Enque jQuery UI Tabs
-	wp_enqueue_script('jquery-ui-dialog'); 
+	wp_enqueue_script('jquery');                    
+	wp_enqueue_script('jquery-ui-core');       
+	wp_enqueue_script('jquery-ui-accordion');         
+	wp_enqueue_script('jquery-ui-dialog');   
+	wp_enqueue_script('plupload-all');          
 	wp_enqueue_script('jquery-ui-tooltip');              
 	wp_enqueue_script('jquery-ui-tabs');  
-	wp_enqueue_script('jquery');                    // Enque jQuery http://codex.wordpress.org/Function_Reference/wp_register_script
-	wp_enqueue_script('jquery-ui-core');            // Enque jQuery UI Core
+	wp_enqueue_script('jquery');                  
+	wp_enqueue_script('jquery-ui-core');           
 	wp_enqueue_script( 'ajax-script', plugins_url( '/js/sekrip.js', __FILE__ ), array('jquery') );
 
-	// in javascript, object properties are accessed as ajax_object.ajax_url, ajax_object.we_value
+	
 	wp_localize_script( 'ajax-script', 'ajax_object',
             array( 'ajax_url' => admin_url( 'admin-ajax.php' ) ) );
 }
@@ -236,7 +255,7 @@ WER;
 			$result = array_merge($result, $files->getItems());
 			$pageToken = $files->getNextPageToken();
 		} catch (Exception $e) {
-			echo '<div class="error">An error occurred: ' . $e->getMessage() . '</div>';
+			echo '<div class="error">An error occurred: ' . wp_strip_all_tags($e->getMessage()) . '</div>';
 			$pageToken = NULL;
 		}
 	} while ($pageToken);
@@ -259,7 +278,7 @@ WER;
 <?php
 global $cek_kunci;
 if($cek_kunci == 'false'){ ?>
-		<h3>Management</h3>
+		<h3>My Google Drive</h3>
 	<div>
 		<div id="tabs" style="margin:0 -12px 0 -12px;">
 		<ul>
@@ -276,12 +295,12 @@ if($cek_kunci == 'false'){ ?>
 				<p>Select folder: <?php echo $folderpil; ?> <button id="golek_seko_folder" name="golek_seko_folder" class="button-primary"><?php _e('Get Files') ?></button></p> 
 				<p><span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br />
 				Link URL of your file: https://docs.google.com/uc?id=<b>YOUR-FILE-ID-HERE</b>&export=view </span></p>		
-				<div id="gdwpm_loading_gbr">
+				<div style="display: none" id="gdwpm_loading_gbr">
 				  <center><img src="https://docs.google.com/uc?id=0B2Or6CnfqndYdXoyZEk5eFczTXc&export=view" /><br />Please wait...</center>
 				</div>
-				<div id="hasil"></div><div id="gdwpm_masuk_perpus_teks"><p>Pick a file to include it in the Media Library.</p>
+				<div id="hasil"></div><div style="display: none" id="gdwpm_masuk_perpus_teks"><p>Pick a file to include it in the Media Library.</p>
 				<p><button id="gdwpm_berkas_masuk_perpus" name="gdwpm_berkas_masuk_perpus" class="button-primary">Add to Media Library</button>&nbsp;&nbsp;&nbsp; 
-				<span id="gdwpm_add_to_media_gbr"><img src="https://docs.google.com/uc?id=0B2Or6CnfqndYZUpXcmdOeGIxZU0&export=view" /></span>
+				<span style="display: none" id="gdwpm_add_to_media_gbr"><img src="https://docs.google.com/uc?id=0B2Or6CnfqndYZUpXcmdOeGIxZU0&export=view" /></span>
 				<span id="gdwpm_info_masuk_perpus"></span></p></div>
 				<?php
 echo $daftarfile;
@@ -289,21 +308,117 @@ echo $daftarfile;
 				<p></p> 
 			</div>
 			<div id="tabs-2">
-				<form enctype="multipart/form-data" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
-				<p>Select folder: <?php echo str_replace('folder_pilian', 'folder_pilian_aplod', $folderpil); ?> or create a new folder: <input type="text" name="gdwpm_folder_anyar" value="" size="37" placeholder="Ignore this field if you use existing folder"></p>
-				<p>Short Description: <input type="text" name="gdwpm_aplod_deskrip" value="" size="65" placeholder="Optional"></p>
+				<p>Select folder: <?php echo str_replace('folder_pilian', 'folder_pilian_aplod', $folderpil); ?> or create a new folder: <input type="text" id="gdwpm_folder_anyar" name="gdwpm_folder_anyar" value="" size="37" placeholder="Ignore this field if you use existing folder"></p>
+				<!--<p>Short Description: <input type="text" name="gdwpm_aplod_deskrip" value="" size="65" placeholder="Optional"></p>-->
 				<p><ul><li>Maximum file size: 10GB.</li><li>Accepted Media MIME types: */*</li></ul> </p>
-				<p>Choose your file here:
-				<input name="gdwpm_aplod_file" type="file"/></p> 
-				<input type='checkbox' name='masukperpus' value='1' checked /> Add to Media Library.<!-- (Image only: <i>*.jpg, *.jpeg, *.png, & *.gif</i>)--><p>
 				
-<input type="hidden" id="nama_folder_pilian_aplod" value="" />
-				<input type="submit" onclick="document.getElementById('nama_folder_pilian_aplod').value=document.getElementById('folder_pilian_aplod').options[document.getElementById('folder_pilian_aplod').selectedIndex].text" 
-				name="gdwpm_aplot_masuk" class="button-primary" value="Upload to Google Drive"/></p>
-				</form>
+<?php
+				$gdwpm_satpam_buat_nonce = wp_create_nonce( 'gdwpm_satpam_aplod_berkas' );
+				?> <ul id="filelist"></ul>
+				<br />
+				<br />
+				<pre id="console"></pre>
+				<div id="gdwpm_upload_container"><p id="gdwpm-pilih-kt">Choose your file: 
+					<a id="gdwpm_tombol_browse" href="javascript:;"><button class="button-primary">Browse</button></a></p>
+					<input type='checkbox' id='gdwpm_cekbok_masukperpus' name='gdwpm_cekbok_masukperpus' value='1' checked /> Add to Media Library. (just linked to, all files still remain in Google Drive)<!-- (Image only: <i>*.jpg, *.jpeg, *.png, & *.gif</i>)--><p>
+					<a style="display:none;" id="gdwpm_start-upload" href="javascript:;"><button class="button-primary">Upload to Google Drive</button></a>
+				</div>
+				<img id="gdwpm_loding_128" style="margin: 0 0 0 111px;display:none;" src="http://docs.google.com/uc?id=0B4hkh-PEv0ZZdFBVNm9YWXhDWWM&export=view">
+ 
+<script type="text/javascript"> 
+var uploader = new plupload.Uploader({
+  browse_button: 'gdwpm_tombol_browse', 
+  url: '<?php echo admin_url( 'admin-ajax.php?action=gdwpm_on_action&gdwpm_nonce_aplod_berkas=') . $gdwpm_satpam_buat_nonce; ?>'
+});
+ 
+uploader.init();
+ 
+uploader.bind('FilesAdded', function(up, files) {
+  var html = '';
+  plupload.each(files, function(file) {
+    html += '<li id="' + file.id + '"><strong><font color="maroon">' + file.name + '</font></strong> (' + plupload.formatSize(file.size) + ') <b></b> <input type="text" id="' + file.id + 'gdwpm_aplod_deskrip" name="' + file.id + 'lod_deskrip" value="" size="55" placeholder="Short Description (optional)"></li>';
+  });
+  document.getElementById('filelist').innerHTML += html;
+	$('#console').empty();
+	$('#gdwpm_start-upload').show();
+});
+ 
+uploader.bind('UploadProgress', function(up, file) {
+  document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span><font color="blue">' + file.percent + "%</font></b>  " +  $('#' + file.id + 'gdwpm_aplod_deskrip').val() + "<b></span><hr>";
+  $('#' + file.id + 'gdwpm_aplod_deskrip').hide();
+	$('#gdwpm_upload_container').hide();
+	$('#gdwpm_loding_128').show();
+});
+ 
+uploader.bind('Error', function(up, err) {
+  document.getElementById('console').innerHTML += "\nError #" + err.code + ": " + err.message;
+	$('#gdwpm_upload_container').show();
+	$('#gdwpm_loding_128').hide();
+	$('#gdwpm_start-upload').hide();
+});
+document.getElementById('gdwpm_start-upload').onclick = function() {
+  uploader.start();
+};
+ uploader.bind('FileUploaded', function(up, file, response ) {
+                response=response["response"];
+		$('#console').html(response);
+	$('#gdwpm_upload_container').show();
+	$('#gdwpm_loding_128').hide();
+	$('#gdwpm_start-upload').hide();
+    //alert(obj.cleanFileName);
+});
+ 
+   uploader.bind('BeforeUpload', function (up, file) {
+      up.settings.multipart_params = {gdpwm_nm_bks: $("#folder_pilian_aplod option:selected").text(), gdpwm_nm_id: $('select[name=folder_pilian_aplod]').val(), 
+	  gdpwm_nm_br: $('#gdwpm_folder_anyar').val(), gdpwm_sh_ds: $('#' + file.id + 'gdwpm_aplod_deskrip').val(), gdpwm_med_ly: $('#gdwpm_cekbok_masukperpus:checked').val()};
+   });   
+</script>
 			</div>
 			<div id="tabs-3">
-				<p>Nothing found.</p><p>option to remote images</p>
+				<?php 
+				$gdwpm_override = get_option('gdwpm_override_dir_bawaan'); // cekbok, polder
+				$gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
+				?>
+				<p><a onclick="gdwpm_cekbok_opsi_override_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_override' name='gdwpm_cekbok_opsi_override' value='1' <?php echo $gdwpm_override[0];?>/></a> 
+				Google Drive as Default Media Upload Storage. (experimental)<br />
+				&nbsp;<dfn>This option will change your default upload dir (<?php $def_upload_dir = wp_upload_dir(); echo $def_upload_dir['baseurl'];?>) to Google Drive. 
+				That's mean, when you upload files through default uploader (ex: Media >> Add New) it will automatically uploading your files to Google Drive.</dfn></p>
+				<div id="gdwpm_folder_opsi_override_eksen" style="margin-left:15px;display: <?php if ($gdwpm_override[0] == 'checked') { echo 'block;';}else{echo 'none;';}?>">
+					<p>Google Drive folder name<br />
+					<input type="text" id="gdwpm_folder_opsi_override_teks" name="gdwpm_folder_opsi_override_teks" value="<?php echo $gdwpm_override[1];?>" size="35" placeholder="Required (auto create if not exist)" />	
+					</p>					
+				</div>
+				<button onclick="gdwpm_tombol_opsi_override_eksen();" id="gdwpm_tombol_opsi_override" name="gdwpm_tombol_opsi_override" class="button-primary">Save</button>&nbsp;&nbsp;&nbsp; 
+				<span style="display: none" id="gdwpm_cekbok_opsi_override_gbr"><img src="https://docs.google.com/uc?id=0B2Or6CnfqndYZUpXcmdOeGIxZU0&export=view" /></span>
+				<span id="gdwpm__cekbok_opsi_override_info"></span>
+<script type="text/javascript">	
+function gdwpm_cekbok_opsi_override_eksen(){
+	if ($('#gdwpm_cekbok_opsi_override').prop('checked')){
+		document.getElementById("gdwpm_folder_opsi_override_eksen").style.display = "block";
+	}else{
+		document.getElementById("gdwpm_folder_opsi_override_eksen").style.display = "none";
+	}
+}
+function gdwpm_tombol_opsi_override_eksen(){
+	if ($('#gdwpm_cekbok_opsi_override').prop('checked')){
+		var gdwpm_cekbok = 'checked';
+	}else{
+		var gdwpm_cekbok = '';
+	}
+		$("#gdwpm_cekbok_opsi_override_gbr").show();
+		$('#gdwpm__cekbok_opsi_override_info').empty();
+		var data = {
+			action: 'gdwpm_on_action',
+			gdwpm_override_nonce: '<?php echo $gdwpm_override_nonce; ?>',
+			gdwpm_cekbok_opsi_value: gdwpm_cekbok ,
+			gdwpm_folder_opsi_value: $('#gdwpm_folder_opsi_override_teks').val()
+		};
+		jQuery.post(ajax_object.ajax_url, data, function(hasil) {
+			$('#gdwpm_cekbok_opsi_override_gbr').hide();
+			$('#gdwpm__cekbok_opsi_override_info').html(hasil);
+		});
+}
+</script>		
 			</div>
 <?php }else{ ?>
 			<div id="tabs-4">
@@ -424,29 +539,86 @@ function gdwpm_ijin_masuk_perpus($jenis_berkas, $nama_berkas, $id_berkas, $deskr
 add_action( 'wp_ajax_gdwpm_on_action', 'gdwpm_action_callback' );
 function gdwpm_action_callback() {
 	global $wpdb, $cek_kunci, $gdwpm_opt_akun, $service, $apiConfig;
-$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, service akun, private key
+	$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, service akun, private key
 
-if(isset($_POST['folder_pilian'])){
-$apiConfig['use_objects'] = true;
-$service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
-	$folder_pilian =  $_POST['folder_pilian'] ;
-	$fld = $_POST['folder_pilian'];
-			$daftar_berkas = $service->getFilesInFolder($fld);
-			$daftarfile = $daftar_berkas[0];
-			$i = $daftar_berkas[1];
-			if($i <= 0){
-				$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
-			}
-			echo '<div class="sukses"><p>Your current Folder ID is <strong>'.$fld.'</strong> and <strong>'.$i.' files</strong> detected in this folder.</p></div>';
-		
-        echo $daftarfile;
-}elseif(isset($_POST['masuk_perpus'])){
-	$gdwpm_berkas_terpilih_arr = explode(' | ', $_POST['masuk_perpus']);
-	gdwpm_ijin_masuk_perpus(sanitize_mime_type($gdwpm_berkas_terpilih_arr[0]), $gdwpm_berkas_terpilih_arr[1], $gdwpm_berkas_terpilih_arr[2], $gdwpm_berkas_terpilih_arr[3]);
+	if(isset($_POST['folder_pilian'])){
+	$apiConfig['use_objects'] = true;
+	$service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
+		$folder_pilian =  $_POST['folder_pilian'] ;
+		$fld = $_POST['folder_pilian'];
+				$daftar_berkas = $service->getFilesInFolder($fld);
+				$daftarfile = $daftar_berkas[0];
+				$i = $daftar_berkas[1];
+				if($i <= 0){
+					$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
+				}
+				echo '<div class="sukses"><p>Your current Folder ID is <strong>'.$fld.'</strong> and <strong>'.$i.' files</strong> detected in this folder.</p></div>';
 			
-	echo '<strong>'.$gdwpm_berkas_terpilih_arr[1] . '</strong> has been added to your Media Library';
-}
-die();
+			echo $daftarfile;
+	}elseif(isset($_POST['masuk_perpus'])){
+		$gdwpm_berkas_terpilih_arr = explode(' | ', $_POST['masuk_perpus']);
+		gdwpm_ijin_masuk_perpus(sanitize_mime_type($gdwpm_berkas_terpilih_arr[0]), $gdwpm_berkas_terpilih_arr[1], $gdwpm_berkas_terpilih_arr[2], $gdwpm_berkas_terpilih_arr[3]);
+				
+		echo '<strong>'.$gdwpm_berkas_terpilih_arr[1] . '</strong> has been added to your Media Library';
+	}elseif(isset($_POST['gdwpm_cekbok_opsi_value'])){
+		$nonce = $_REQUEST['gdwpm_override_nonce'];
+		if ( ! wp_verify_nonce( $nonce, 'gdwpm_override_dir' ) ) {
+			echo '<strong>Oops... failed!</strong>';
+			die(); 
+		} else {
+			$folder_bawaan = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdwpm_folder_opsi_value']);
+			$folder_bawaan = sanitize_text_field($folder_bawaan);
+			if(empty($folder_bawaan) && $_POST['gdwpm_cekbok_opsi_value'] == 'checked'){
+				echo 'Folder name cannot be empty!';
+			}else{
+				$gdwpm_cekbok = array($_POST['gdwpm_cekbok_opsi_value'], $folder_bawaan);
+				update_option('gdwpm_override_dir_bawaan', $gdwpm_cekbok);	
+				echo 'Setting saved.';
+			}
+		}
+	}else{
+		$nonce = $_REQUEST['gdwpm_nonce_aplod_berkas'];
+		if ( ! wp_verify_nonce( $nonce, 'gdwpm_satpam_aplod_berkas' ) ) {
+			echo '<div class="error"><p>Oops.. security check is not ok!</p></div>';
+			die(); 
+		} else {
+			if (empty($_FILES) || $_FILES["file"]["error"]) {
+				echo '<div class="error"><p>Oops.. error, upload failed! '.$_FILES["file"]["error"].'</p></div>';
+				die();
+			}
+				$filename = $_FILES['file']['name'];
+				$path = $_FILES['file']['tmp_name'];
+				$mime_berkas = $_FILES['file']['type'];
+				//$mime_berkas = sanitize_mime_type($mime_berkas);
+				$folder_ortu = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdpwm_nm_br']);
+				$folder_ortu = sanitize_text_field($folder_ortu);
+				$folderId = $_POST['gdpwm_nm_id'];
+				$nama_polder = $_POST['gdpwm_nm_bks'];
+				if($folder_ortu != ''){
+					$folderId = $service->getFileIdByName( $folder_ortu );
+					$nama_polder = $_POST['gdpwm_nm_br'];
+				}
+				$content = $_POST['gdpwm_sh_ds'];
+
+				if( ! $folderId ) {
+						$folderId = $service->createFolder( $folder_ortu );
+						$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
+				}
+
+				$fileParent = new Google_ParentReference();
+				$fileParent->setId( $folderId );
+				$fileId = $service->createFileFromPath( $path, $filename, $content, $fileParent );
+				$service->setPermissions( $fileId, 'me', 'reader', 'anyone' );
+				$sukinfo = '';
+				if(!empty($mime_berkas) && $_POST['gdpwm_med_ly'] == '1'){
+					gdwpm_ijin_masuk_perpus($mime_berkas, $filename, $fileId, $content);
+					$sukinfo = ' and added into your Media Library';
+				}
+				echo '<div class="updated"><p>Great! File <strong>'.$fileId.'</strong> successfully uploaded to <strong>'.$nama_polder.'</strong>'.$sukinfo.'.</p></div>';
+				die();
+		}
+	}
+	die();
 }
 
 class GDWPMBantuan {
@@ -549,5 +721,12 @@ class GDWPMBantuan {
 		
 			return array($daftarfile, $i);
 		}
+}
+function gdwpm_cek_versi(){
+	$gdwpm_svn_tags = @file_get_contents('http://plugins.svn.wordpress.org/google-drive-wp-media/tags/');
+	$gdwpm_svn_tags = explode('<li><a href="', $gdwpm_svn_tags);
+	$gdwpm_versi_baru = $gdwpm_svn_tags[count($gdwpm_svn_tags) - 1];
+	$gdwpm_versi_baru = substr($gdwpm_versi_baru,0 , strpos($gdwpm_versi_baru, '/'));
+	return $gdwpm_versi_baru;
 }
 ?>

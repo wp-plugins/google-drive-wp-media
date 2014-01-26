@@ -1,14 +1,14 @@
 === Google Drive WP Media ===
 Contributors: Moch Amir
 Donate link: http://www.mochamir.com/
-Tags: google drive,google drive upload, google drive share, wp google drive, wp media, upload
-Requires at least: 1.5
+Tags: google drive, google drive upload, media library, google drive plugin, galery, file upload, google drive share, feautured image, wp google drive, files hosting, wp media, upload, hosting storage, files hosting storage, google
+Requires at least: 3.1
 Tested up to: 3.8
-Stable tag: 0.2
+Stable tag: 0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Upload files to Google Drive from WordPress blog.
+Upload files to Google Drive from WordPress blog. Make Google Drive as your upload files hosting storage.
 
 == Description ==
 
@@ -36,6 +36,12 @@ Features:
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 0.3 =
+
+* Override default media upload dir added
+* GUI and CSS changed
+* JQuery upload added
 
 = 0.2 =
 
