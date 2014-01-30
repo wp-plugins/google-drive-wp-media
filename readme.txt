@@ -24,7 +24,6 @@ Features:
 * Enable to attach any files to posts.
 * 700kb chunked for handle uploading large files.
 
-
 Required:
 
 * PHP 5.3.0
