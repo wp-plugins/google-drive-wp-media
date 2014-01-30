@@ -5,7 +5,7 @@ Plugin URI: http://www.mochamir.com/
 Description: Google Drive on Wordpress Media Publishing.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 0.4
+Version: 0.5
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -31,7 +31,8 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
-define( 'VERSI_GDWPM', '0.4' );
+define( 'MINPHP_GDWPM', '5.3.0' );
+define( 'VERSI_GDWPM', '0.5' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'google-api-php-client/src/Google_Client.php';
@@ -182,17 +183,6 @@ $gdwpm_skriphed = <<<WER
 <script src="http://code.jquery.com/jquery-1.9.1.js"></script><link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
   <script>
   $(function() {
-    $( "#dialog-message" ).dialog({
-      autoOpen: {$cek_kunci},
-      modal: true,
-      buttons: {
-        Ok: function() {
-          $( this ).dialog( "close" );
-        }
-      }
-    });
-  });
-  $(function() {
     var icons = {
       header: "ui-icon-wrench",
       activeHeader: "ui-icon-lightbulb"
@@ -286,7 +276,11 @@ WER;
 ?>
 <div id="accordion" style="margin:10px 10px 5px 10px;">
 <?php
-global $cek_kunci;
+//cek versi php
+$gdwpm_cek_php = 'true';
+if(version_compare(PHP_VERSION, MINPHP_GDWPM) >= 0) {
+	$gdwpm_cek_php = 'false';
+	global $cek_kunci;
 if($cek_kunci == 'false'){ ?>
 		<h3>My Google Drive</h3>
 	<div>
@@ -533,11 +527,16 @@ function gdwpm_tombol_opsi_override_eksen(){
 			<p style="margin-left:35px;"><input type="submit" name="simpen_gdwpm_akun" class="button-primary" value="<?php _e('Save') ?>" /></p>		
 			</form>
 	</div>
+<?php }else{$cek_kunci = 'false';} ?>
 		<h3>Documentation</h3>
 	<div>
+		
+			<h3>Minimum requirement</h3>
 		<p>
-			How to generate your Google Drive API Key.
+			PHP <?php echo MINPHP_GDWPM;?> with cURL enabled.
 		</p>
+			<h3>How to generate your Google Drive API Key.</h3>
+		
 		<p>
 			1. Go to https://code.google.com/apis/console/, sign in with your google account. Click Create Project. 
 			<br /><img src="https://docs.google.com/uc?id=0B4hkh-PEv0ZZb1J1aV9QX3NiZ0U&export=view">
@@ -607,9 +606,43 @@ function gdwpm_tombol_opsi_override_eksen(){
     It seems your api keys haven't properly saved yet. This plugin requires api key to authorize your drive.
   </p>
   <p>
-    Click the documentation tab for more info.</b>.
+    Click the documentation tab for more info.
   </p>
 </div>
+<div id="gdwpm_pringatan_versi_php" title="Warning">
+  <p>
+    <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 50px 0;"></span>
+    Sorry, You can't use this plugin with your current PHP version.<br>This plugin requires <b>PHP <?php echo MINPHP_GDWPM;?></b>.<br>
+	Your PHP version is <b><?php echo phpversion();?></b>.
+  </p>
+  <p>
+    Please upgrade your PHP to <?php echo MINPHP_GDWPM;?>.
+  </p>
+</div>
+<script>
+  $(function() {
+    $( "#gdwpm_pringatan_versi_php" ).dialog({
+      autoOpen: <?php echo $gdwpm_cek_php;?>,
+      modal: true,
+      buttons: {
+        Ok: function() {
+          $( this ).dialog( "close" );
+        }
+      }
+    });
+  });
+  $(function() {
+    $( "#dialog-message" ).dialog({
+      autoOpen: <?php echo $cek_kunci;?>,
+      modal: true,
+      buttons: {
+        Ok: function() {
+          $( this ).dialog( "close" );
+        }
+      }
+    });
+  });
+</script>
 <?php
 
 }
@@ -688,11 +721,12 @@ function gdwpm_action_callback() {
 				$filename = uniqid("file_");
 			}
 			
-			$targetDir = ini_get("upload_tmp_dir") . DIRECTORY_SEPARATOR . "gdwpm_tmp";
+			$targetDir = ini_get("upload_tmp_dir");
 			$maxFileAge = 5 * 3600; // Temp file age in seconds
 			// Create target dir
 			if (!file_exists($targetDir)) {
-				@mkdir($targetDir);
+				//@mkdir($targetDir);
+				$targetDir = sys_get_temp_dir();
 			}
 
 			$filePath = $targetDir . DIRECTORY_SEPARATOR . $filename;
