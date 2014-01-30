@@ -74,3 +74,4 @@ Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link
 1. Media Upload Tab
 2. Files & Folder List
 3. Media Menu
+4. Media Library Attachment
