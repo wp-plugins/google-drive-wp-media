@@ -5,7 +5,7 @@ Plugin URI: http://www.mochamir.com/
 Description: Google Drive on Wordpress Media Publishing.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 0.5
+Version: 0.6
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '0.5' );
+define( 'VERSI_GDWPM', '0.6' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'google-api-php-client/src/Google_Client.php';
@@ -68,7 +68,7 @@ if ($_POST['simpen_gawe_folder'])
 		if( ! $folderId ) {
 			$folderId = $service->createFolder( $gawe_folder );
 			$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
-			echo '<div class="updated"><p>Great! Folder with name '.$gawe_folder.' successfuly created.</p></div>';
+			echo '<div class="updated"><p>Great! Folder name <strong>'.$gawe_folder.'</strong> successfully created.</p></div>';
 		}else{
 			echo '<div class="error"><p>Folder '.$gawe_folder.' already exist</p></div>';
 		}
@@ -178,27 +178,26 @@ function gdwpm_filter_gbrurl( $url ){
 
 function gdwpm_halaman_utama() {
 	global $cek_kunci, $gdwpm_opt_akun, $service, $apiConfig;
-
-$gdwpm_skriphed = <<<WER
-<script src="http://code.jquery.com/jquery-1.9.1.js"></script><link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+?>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
   <script>
-  $(function() {
+  jQuery(function() {
     var icons = {
       header: "ui-icon-wrench",
       activeHeader: "ui-icon-lightbulb"
     };
-    $( "#accordion" ).accordion({
+    jQuery( "#accordion" ).accordion({
       heightStyle: "content",
       icons: icons
     });
-  $(function() {
-    var tooltips = $( "[title]" ).tooltip();
+  jQuery(function() {
+    var tooltips = jQuery( "[title]" ).tooltip();
   });
   });
   </script>
    <script>
-  $(function() {
-    $( "#tabs" ).tabs();
+  jQuery(function() {
+    jQuery( "#tabs" ).tabs();
   });
   </script>
 <style type="text/css">
@@ -234,8 +233,7 @@ $gdwpm_skriphed = <<<WER
 	color: #339;
 }
 </style>
-WER;
-	echo $gdwpm_skriphed;
+<?php
 
 	$apiConfig['use_objects'] = true;
 	
@@ -298,13 +296,21 @@ if($cek_kunci == 'false'){ ?>
 			<div id="tabs-1">
 				<p>Select folder: <?php echo $folderpil; ?> <button id="golek_seko_folder" name="golek_seko_folder" class="button-primary"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
 					<span id="gdwpm_info_folder_baru" style="display:none;">
-						<!--You have created a new folder, but it's not listed yet. Click Reload button to add in list.-->
-						<button id="gdwpm_tombol_info_folder_baru" name="gdwpm_tombol_info_folder_baru"><?php _e('Reload Folder') ?></button>
+						You have created at least one folder.
+						<button id="gdwpm_tombol_info_folder_baru" name="gdwpm_tombol_info_folder_baru" onclick="gdwpm_reload_hal()"><?php _e('Reload Now') ?></button>
 					</span>
 				</p>
+<script>
+function gdwpm_reload_hal()
+  {
+  location.reload();
+  }
+</script>
 				<p>
-					<span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br />
+					<span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br /><br />
 						Link URL of your file: https://docs.google.com/uc?id=<b>YOUR-FILE-ID-HERE</b>&export=view 
+						<br />
+						Google Docs Viewer: https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<b>YOUR-FILE-ID-HERE</b>%26export%3Dview
 					</span>
 				</p>		
 				<div style="display: none" id="gdwpm_loading_gbr">
@@ -371,47 +377,50 @@ uploader.bind('FilesAdded', function(up, files) {
     html += '<li id="' + file.id + '"><strong><font color="maroon">' + file.name + '</font></strong> (' + plupload.formatSize(file.size) + ') <b></b> <input type="text" id="' + file.id + 'gdwpm_aplod_deskrip" name="' + file.id + 'lod_deskrip" value="" size="55" placeholder="Short Description (optional)"></li>';
   });
   document.getElementById('filelist').innerHTML += html;
-	$('#console').empty();
-	$('#gdwpm_start-upload').show();
+	jQuery('#console').empty();
+	jQuery('#gdwpm_start-upload').show();
 });
  
 uploader.bind('UploadProgress', function(up, file) {
-  document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span><font color="blue">' + file.percent + "%</font></b>  " +  $('#' + file.id + 'gdwpm_aplod_deskrip').val() + "<b></span><hr>";
-  $('#' + file.id + 'gdwpm_aplod_deskrip').hide();
-	$('#gdwpm_upload_container').hide();
-	$('#gdwpm_loding_128').show();
+  document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span><font color="blue">' + file.percent + "%</font></b>  " +  jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val() + "<b></span><hr>";
+  jQuery('#' + file.id + 'gdwpm_aplod_deskrip').hide();
+	jQuery('#gdwpm_upload_container').hide();
+	jQuery('#gdwpm_loding_128').show();
 });
  
 uploader.bind('Error', function(up, err) {
   document.getElementById('console').innerHTML += "\nError #" + err.code + ": " + err.message;
-	$('#gdwpm_upload_container').show();
-	$('#gdwpm_loding_128').hide();
-	$('#gdwpm_start-upload').hide();
+	jQuery('#gdwpm_upload_container').show();
+	jQuery('#gdwpm_loding_128').hide();
+	jQuery('#gdwpm_start-upload').hide();
 });
 document.getElementById('gdwpm_start-upload').onclick = function() {
   uploader.start();
 };
  uploader.bind('FileUploaded', function(up, file, response ) {
                 response=response["response"];
-		$('#console').html(response);
-	$('#gdwpm_upload_container').show();
-	$('#gdwpm_loding_128').hide();
-	$('#gdwpm_start-upload').hide();
+		jQuery('#console').html(response);
+	jQuery('#gdwpm_upload_container').show();
+	jQuery('#gdwpm_loding_128').hide();
+	jQuery('#gdwpm_start-upload').hide();
+	if(jQuery('#gdwpm_folder_anyar').val() != ''){
+		jQuery('#gdwpm_info_folder_baru').show();
+	}
     //alert(obj.cleanFileName);
 });
  
    uploader.bind('BeforeUpload', function (up, file) {
-      up.settings.multipart_params = {gdpwm_nm_bks: $("#folder_pilian_aplod option:selected").text(), gdpwm_nm_id: $('select[name=folder_pilian_aplod]').val(), 
-	  gdpwm_nm_br: $('#gdwpm_folder_anyar').val(), gdpwm_sh_ds: $('#' + file.id + 'gdwpm_aplod_deskrip').val(), gdpwm_med_ly: $('#gdwpm_cekbok_masukperpus:checked').val(),
+      up.settings.multipart_params = {gdpwm_nm_bks: jQuery("#folder_pilian_aplod option:selected").text(), gdpwm_nm_id: jQuery('select[name=folder_pilian_aplod]').val(), 
+	  gdpwm_nm_br: jQuery('#gdwpm_folder_anyar').val(), gdpwm_sh_ds: jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val(), gdpwm_med_ly: jQuery('#gdwpm_cekbok_masukperpus:checked').val(),
 	  gdpwm_nama_file: file.name};
    });  
    uploader.bind('ChunkUploaded', function(up, file, info) {
      // do some chunk related stuff  
 	 response=info["response"];
-		$('#console').html(response);
-	$('#gdwpm_upload_container').show();
-	$('#gdwpm_loding_128').hide();
-	$('#gdwpm_start-upload').hide();
+		jQuery('#console').html(response);
+	jQuery('#gdwpm_upload_container').show();
+	jQuery('#gdwpm_loding_128').hide();
+	jQuery('#gdwpm_start-upload').hide();
 }); 
 </script>
 			</div>
@@ -439,29 +448,29 @@ document.getElementById('gdwpm_start-upload').onclick = function() {
 				<span id="gdwpm__cekbok_opsi_override_info"></span>
 <script type="text/javascript">	
 function gdwpm_cekbok_opsi_override_eksen(){
-	if ($('#gdwpm_cekbok_opsi_override').prop('checked')){
+	if (jQuery('#gdwpm_cekbok_opsi_override').prop('checked')){
 		document.getElementById("gdwpm_folder_opsi_override_eksen").style.display = "block";
 	}else{
 		document.getElementById("gdwpm_folder_opsi_override_eksen").style.display = "none";
 	}
 }
 function gdwpm_tombol_opsi_override_eksen(){
-	if ($('#gdwpm_cekbok_opsi_override').prop('checked')){
+	if (jQuery('#gdwpm_cekbok_opsi_override').prop('checked')){
 		var gdwpm_cekbok = 'checked';
 	}else{
 		var gdwpm_cekbok = '';
 	}
-		$("#gdwpm_cekbok_opsi_override_gbr").show();
-		$('#gdwpm__cekbok_opsi_override_info').empty();
+		jQuery("#gdwpm_cekbok_opsi_override_gbr").show();
+		jQuery('#gdwpm__cekbok_opsi_override_info').empty();
 		var data = {
 			action: 'gdwpm_on_action',
 			gdwpm_override_nonce: '<?php echo $gdwpm_override_nonce; ?>',
 			gdwpm_cekbok_opsi_value: gdwpm_cekbok ,
-			gdwpm_folder_opsi_value: $('#gdwpm_folder_opsi_override_teks').val()
+			gdwpm_folder_opsi_value: jQuery('#gdwpm_folder_opsi_override_teks').val()
 		};
 		jQuery.post(ajax_object.ajax_url, data, function(hasil) {
-			$('#gdwpm_cekbok_opsi_override_gbr').hide();
-			$('#gdwpm__cekbok_opsi_override_info').html(hasil);
+			jQuery('#gdwpm_cekbok_opsi_override_gbr').hide();
+			jQuery('#gdwpm__cekbok_opsi_override_info').html(hasil);
 		});
 }
 </script>		
@@ -620,24 +629,24 @@ function gdwpm_tombol_opsi_override_eksen(){
   </p>
 </div>
 <script>
-  $(function() {
-    $( "#gdwpm_pringatan_versi_php" ).dialog({
+  jQuery(function() {
+    jQuery( "#gdwpm_pringatan_versi_php" ).dialog({
       autoOpen: <?php echo $gdwpm_cek_php;?>,
       modal: true,
       buttons: {
         Ok: function() {
-          $( this ).dialog( "close" );
+          jQuery( this ).dialog( "close" );
         }
       }
     });
   });
-  $(function() {
-    $( "#dialog-message" ).dialog({
+  jQuery(function() {
+    jQuery( "#dialog-message" ).dialog({
       autoOpen: <?php echo $cek_kunci;?>,
       modal: true,
       buttons: {
         Ok: function() {
-          $( this ).dialog( "close" );
+          jQuery( this ).dialog( "close" );
         }
       }
     });
