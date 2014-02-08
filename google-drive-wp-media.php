@@ -5,7 +5,7 @@ Plugin URI: http://www.mochamir.com/
 Description: Google Drive on Wordpress Media Publishing.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 0.6
+Version: 0.7
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,50 +32,11 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '0.6' );
+define( 'VERSI_GDWPM', '0.7' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'google-api-php-client/src/Google_Client.php';
 require_once 'google-api-php-client/src/contrib/Google_DriveService.php';
-
-$cek_kunci = 'true'; // kosong
-	if ($_POST['simpen_gdwpm_akun'])
-	{
-		if (!EMPTY($_POST['gdwpm_imel']) && !EMPTY($_POST['gdwpm_klaen_aidi']) && !EMPTY($_POST['gdwpm_nama_service']) && !EMPTY($_POST['gdwpm_kunci_rhs']))
-		{
-			$gdwpm_opt = array($_POST['gdwpm_imel'], $_POST['gdwpm_klaen_aidi'], $_POST['gdwpm_nama_service'], $_POST['gdwpm_kunci_rhs']);
-			update_option('gdwpm_akun_opt', $gdwpm_opt);
-			echo '<div class="updated"><p>Great! All API settings successfuly saved.</p></div>';
-		}else{
-			echo '<div class="error"><p>All fields are required.</p></div>';
-		}
-	}
-$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, service akun, private key
-if($gdwpm_opt_akun){
-$cek_kunci = 'false';
-//$apiConfig['use_objects'] = true;
-$service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
-}
-
-if ($_POST['simpen_gawe_folder'])
-{
-	if (!EMPTY($_POST['gdwpm_gawe_folder']))
-	{
-		$gawe_folder = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdwpm_gawe_folder']);
-		$gawe_folder = sanitize_text_field($gawe_folder);
-		$folderId = $service->getFileIdByName( $gawe_folder );
-
-		if( ! $folderId ) {
-			$folderId = $service->createFolder( $gawe_folder );
-			$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
-			echo '<div class="updated"><p>Great! Folder name <strong>'.$gawe_folder.'</strong> successfully created.</p></div>';
-		}else{
-			echo '<div class="error"><p>Folder '.$gawe_folder.' already exist</p></div>';
-		}
-	}else{
-			echo '<div class="error"><p>Folder name cannot be empty!</p></div>';
-	}
-}
 
 $gdwpm_override_optional = get_option('gdwpm_override_dir_bawaan'); // cekbok, polder
 
@@ -156,9 +117,7 @@ function gdwpm_sekrip_buat_mimin() {
 	wp_enqueue_script('jquery-ui-dialog');   
 	wp_enqueue_script('plupload-all');          
 	wp_enqueue_script('jquery-ui-tooltip');              
-	wp_enqueue_script('jquery-ui-tabs');  
-	wp_enqueue_script('jquery');                  
-	wp_enqueue_script('jquery-ui-core');           
+	wp_enqueue_script('jquery-ui-tabs');        
 	wp_enqueue_script( 'ajax-script', plugins_url( '/js/sekrip.js', __FILE__ ), array('jquery') );
 	
 	wp_localize_script( 'ajax-script', 'ajax_object',
@@ -178,28 +137,72 @@ function gdwpm_filter_gbrurl( $url ){
 
 function gdwpm_halaman_utama() {
 	global $cek_kunci, $gdwpm_opt_akun, $service, $apiConfig;
+$cek_kunci = 'true'; // kosong
+	if ($_POST['simpen_gdwpm_akun'])
+	{
+		if (!EMPTY($_POST['gdwpm_imel']) && !EMPTY($_POST['gdwpm_klaen_aidi']) && !EMPTY($_POST['gdwpm_nama_service']) && !EMPTY($_POST['gdwpm_kunci_rhs']))
+		{
+			$gdwpm_opt = array($_POST['gdwpm_imel'], $_POST['gdwpm_klaen_aidi'], $_POST['gdwpm_nama_service'], $_POST['gdwpm_kunci_rhs']);
+			update_option('gdwpm_akun_opt', $gdwpm_opt);
+			echo '<div class="updated"><p>Great! All API settings successfuly saved.</p></div>';
+		}else{
+			echo '<div class="error"><p>All fields are required.</p></div>';
+		}
+	}
+$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, service akun, private key
+if($gdwpm_opt_akun){
+$cek_kunci = 'false';
+//$apiConfig['use_objects'] = true;
+$service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
+}
+
+if ($_POST['simpen_gawe_folder'])
+{
+	if (!EMPTY($_POST['gdwpm_gawe_folder']))
+	{
+		$gawe_folder = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdwpm_gawe_folder']);
+		$gawe_folder = sanitize_text_field($gawe_folder);
+		$folderId = $service->getFileIdByName( $gawe_folder );
+
+		if( ! $folderId ) {
+			$folderId = $service->createFolder( $gawe_folder );
+			$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
+			echo '<div class="updated"><p>Great! Folder name <strong>'.$gawe_folder.'</strong> successfully created.</p></div>';
+		}else{
+			echo '<div class="error"><p>Folder '.$gawe_folder.' already exist</p></div>';
+		}
+	}else{
+			echo '<div class="error"><p>Folder name cannot be empty!</p></div>';
+	}
+}
+
 ?>
-<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
-  <script>
-  jQuery(function() {
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/smoothness/jquery-ui.css">
+<script>
+jQuery(function() {
     var icons = {
-      header: "ui-icon-wrench",
-      activeHeader: "ui-icon-lightbulb"
+		header: "ui-icon-wrench",
+		activeHeader: "ui-icon-lightbulb"
     };
     jQuery( "#accordion" ).accordion({
-      heightStyle: "content",
-      icons: icons
+		heightStyle: "content",
+		icons: icons
     });
-  jQuery(function() {
+  
     var tooltips = jQuery( "[title]" ).tooltip();
-  });
-  });
-  </script>
-   <script>
-  jQuery(function() {
+ 
     jQuery( "#tabs" ).tabs();
-  });
-  </script>
+  
+	jQuery( "#doktabs" ).tabs({
+		beforeLoad: function( event, ui ) {
+			ui.jqXHR.error(function() {
+				ui.panel.html(
+				"Opening tab, please wait.." );
+			});
+		}
+    });
+});
+</script>
 <style type="text/css">
 #box-table-a
 {
@@ -288,8 +291,9 @@ if($cek_kunci == 'false'){ ?>
 			<li><a href="#tabs-1">File & Folder List</a></li>
 			<li><a href="#tabs-2">Upload</a></li>
 			<li><a href="#tabs-3">Setting</a></li>
+			<li><a href="#tabs-4">Account Information</a></li>
 <?php }else{ ?>
-			<li><a href="#tabs-4">Create Folder</a></li>
+			<li><a href="#tabs-5">Create Folder</a></li>
 <?php } ?>
 		</ul>
  <?php if (!empty($foldercek)) { ?>
@@ -302,15 +306,21 @@ if($cek_kunci == 'false'){ ?>
 				</p>
 <script>
 function gdwpm_reload_hal()
-  {
-  location.reload();
-  }
+{
+	location.reload();
+}
 </script>
 				<p>
 					<span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br /><br />
 						Link URL of your file: https://docs.google.com/uc?id=<b>YOUR-FILE-ID-HERE</b>&export=view 
 						<br />
 						Google Docs Viewer: https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<b>YOUR-FILE-ID-HERE</b>%26export%3Dview
+						<?php
+							$ebot = $service->getAbout();
+							echo '<br /><br />Storage Usage<br />Total quota: '.size_format($ebot->getQuotaBytesTotal(), 2).'<br />
+							Used quota: '.size_format($ebot->getQuotaBytesUsed(), 2).'<br />
+							Available space: '.size_format($ebot->getQuotaBytesTotal() - $ebot->getQuotaBytesUsed(), 2).'<br />';
+						?>
 					</span>
 				</p>		
 				<div style="display: none" id="gdwpm_loading_gbr">
@@ -362,66 +372,73 @@ echo $daftarfile;
 				<img id="gdwpm_loding_128" style="margin: 0 0 0 111px;display:none;" src="http://docs.google.com/uc?id=0B4hkh-PEv0ZZdFBVNm9YWXhDWWM&export=view">
  
 <script type="text/javascript"> 
-var uploader = new plupload.Uploader({
-  browse_button: 'gdwpm_tombol_browse', 
-  url: '<?php echo admin_url( 'admin-ajax.php?action=gdwpm_on_action&gdwpm_nonce_aplod_berkas=') . $gdwpm_satpam_buat_nonce; ?>',
-  chunk_size: '700kb',
-  max_retries: 3
-});
+	var uploader = new plupload.Uploader({
+		browse_button: 'gdwpm_tombol_browse', 
+		url: '<?php echo admin_url( 'admin-ajax.php?action=gdwpm_on_action&gdwpm_nonce_aplod_berkas=') . $gdwpm_satpam_buat_nonce; ?>',
+		chunk_size: '700kb',
+		max_retries: 3
+	});
  
-uploader.init();
+	uploader.init();
  
-uploader.bind('FilesAdded', function(up, files) {
-  var html = '';
-  plupload.each(files, function(file) {
-    html += '<li id="' + file.id + '"><strong><font color="maroon">' + file.name + '</font></strong> (' + plupload.formatSize(file.size) + ') <b></b> <input type="text" id="' + file.id + 'gdwpm_aplod_deskrip" name="' + file.id + 'lod_deskrip" value="" size="55" placeholder="Short Description (optional)"></li>';
-  });
-  document.getElementById('filelist').innerHTML += html;
-	jQuery('#console').empty();
-	jQuery('#gdwpm_start-upload').show();
-});
+	uploader.bind('FilesAdded', function(up, files) {
+		var html = '';
+		plupload.each(files, function(file) {
+			html += '<li id="' + file.id + '"><strong><font color="maroon">' + file.name + '</font></strong> (' + plupload.formatSize(file.size) + ') <b></b> <input type="text" id="' + file.id + 'gdwpm_aplod_deskrip" name="' + file.id + 'lod_deskrip" value="" size="55" placeholder="Short Description (optional)"></li>';
+		});
+		
+		document.getElementById('filelist').innerHTML += html;
+		jQuery('#console').empty();
+		jQuery('#gdwpm_start-upload').show();
+	});
  
-uploader.bind('UploadProgress', function(up, file) {
-  document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span><font color="blue">' + file.percent + "%</font></b>  " +  jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val() + "<b></span><hr>";
-  jQuery('#' + file.id + 'gdwpm_aplod_deskrip').hide();
-	jQuery('#gdwpm_upload_container').hide();
-	jQuery('#gdwpm_loding_128').show();
-});
+	uploader.bind('UploadProgress', function(up, file) {
+		document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span><font color="blue">' + file.percent + "%</font></b>  " +  jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val() + "<b></span><hr>";
+		
+		jQuery('#' + file.id + 'gdwpm_aplod_deskrip').hide();
+		jQuery('#gdwpm_upload_container').hide();
+		jQuery('#gdwpm_loding_128').show();
+	});
  
-uploader.bind('Error', function(up, err) {
-  document.getElementById('console').innerHTML += "\nError #" + err.code + ": " + err.message;
-	jQuery('#gdwpm_upload_container').show();
-	jQuery('#gdwpm_loding_128').hide();
-	jQuery('#gdwpm_start-upload').hide();
-});
-document.getElementById('gdwpm_start-upload').onclick = function() {
-  uploader.start();
-};
- uploader.bind('FileUploaded', function(up, file, response ) {
-                response=response["response"];
+	uploader.bind('Error', function(up, err) {
+		document.getElementById('console').innerHTML += "\nError #" + err.code + ": " + err.message;
+		
+		jQuery('#gdwpm_upload_container').show();
+		jQuery('#gdwpm_loding_128').hide();
+		jQuery('#gdwpm_start-upload').hide();
+	});
+	
+	document.getElementById('gdwpm_start-upload').onclick = function() {
+		uploader.start();
+	};
+	
+	uploader.bind('FileUploaded', function(up, file, response ) {
+        response=response["response"];
 		jQuery('#console').html(response);
-	jQuery('#gdwpm_upload_container').show();
-	jQuery('#gdwpm_loding_128').hide();
-	jQuery('#gdwpm_start-upload').hide();
-	if(jQuery('#gdwpm_folder_anyar').val() != ''){
-		jQuery('#gdwpm_info_folder_baru').show();
-	}
-    //alert(obj.cleanFileName);
-});
+		
+		jQuery('#gdwpm_upload_container').show();
+		jQuery('#gdwpm_loding_128').hide();
+		jQuery('#gdwpm_start-upload').hide();
+		
+		if(jQuery('#gdwpm_folder_anyar').val() != ''){
+			jQuery('#gdwpm_info_folder_baru').show();
+		}
+	});
  
-   uploader.bind('BeforeUpload', function (up, file) {
-      up.settings.multipart_params = {gdpwm_nm_bks: jQuery("#folder_pilian_aplod option:selected").text(), gdpwm_nm_id: jQuery('select[name=folder_pilian_aplod]').val(), 
-	  gdpwm_nm_br: jQuery('#gdwpm_folder_anyar').val(), gdpwm_sh_ds: jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val(), gdpwm_med_ly: jQuery('#gdwpm_cekbok_masukperpus:checked').val(),
-	  gdpwm_nama_file: file.name};
-   });  
-   uploader.bind('ChunkUploaded', function(up, file, info) {
-     // do some chunk related stuff  
-	 response=info["response"];
+	uploader.bind('BeforeUpload', function (up, file) {
+		up.settings.multipart_params = {gdpwm_nm_bks: jQuery("#folder_pilian_aplod option:selected").text(), gdpwm_nm_id: jQuery('select[name=folder_pilian_aplod]').val(), 
+		gdpwm_nm_br: jQuery('#gdwpm_folder_anyar').val(), gdpwm_sh_ds: jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val(), gdpwm_med_ly: jQuery('#gdwpm_cekbok_masukperpus:checked').val(),
+		gdpwm_nama_file: file.name};
+	});  
+	
+	uploader.bind('ChunkUploaded', function(up, file, info) {
+		response=info["response"];
 		jQuery('#console').html(response);
-	jQuery('#gdwpm_upload_container').show();
-	jQuery('#gdwpm_loding_128').hide();
-	jQuery('#gdwpm_start-upload').hide();
-}); 
+		
+		jQuery('#gdwpm_upload_container').show();
+		jQuery('#gdwpm_loding_128').hide();
+		jQuery('#gdwpm_start-upload').hide();
+	}); 
 </script>
 			</div>
 			<div id="tabs-3">
@@ -475,8 +492,40 @@ function gdwpm_tombol_opsi_override_eksen(){
 }
 </script>		
 			</div>
-<?php }else{ ?>
 			<div id="tabs-4">
+						<table>
+							<tr>
+								<td>Service Account Name</td><td>: </td>
+								<td><?php echo $ebot->getName();?></td>
+							</tr>
+							<tr>
+								<td>Total quota</td><td>: </td>
+								<td><?php echo size_format($ebot->getQuotaBytesTotal(), 2) . ' ('. $ebot->getQuotaBytesTotal() . ' bytes)';?></td>
+							</tr>
+							<tr>
+								<td>Used quota</td><td>: </td>
+								<td><?php echo size_format($ebot->getQuotaBytesUsed(), 2) . ' ('. $ebot->getQuotaBytesUsed() . ' bytes)';?></td>
+							</tr>
+							<tr>
+								<td>Available space</td><td>: </td>
+								<td><?php $sisakuota = $ebot->getQuotaBytesTotal() - $ebot->getQuotaBytesUsed(); echo size_format($sisakuota, 2) . ' ('. $sisakuota . ' bytes)';?></td>
+							</tr>
+							<tr>
+								<td>Root folder ID</td><td>: </td>
+								<td><?php echo $ebot->getRootFolderId();?></td>
+							</tr>
+							<tr>
+								<td>Domain Sharing Policy</td><td>: </td>
+								<td><?php echo $ebot->getDomainSharingPolicy();?></td>
+							</tr>
+							<tr>
+								<td>Permission Id</td><td>: </td>
+								<td><?php echo $ebot->getPermissionId();?></td>
+							</tr>
+						</table>
+			</div>
+<?php }else{ ?>
+			<div id="tabs-5">
 				<p>
 					No folder exist/detected in your drive.
 				</p>
@@ -539,41 +588,22 @@ function gdwpm_tombol_opsi_override_eksen(){
 <?php }else{$cek_kunci = 'false';} ?>
 		<h3>Documentation</h3>
 	<div>
-		
+		<?php
+			$gdwpm_tabulasi_nonce = wp_create_nonce( "gdwpm_tabulasi_ajax" );
+			$gdwpm_url_tab_dok = admin_url( 'admin-ajax.php?action=gdwpm_on_action&gdwpm_tabulasi=apidoku&gdwpm_tabulasi_nonce=') . $gdwpm_tabulasi_nonce;
+		?>
+		<div id="doktabs" style="margin:0 -12px 0 -12px;">
+		<ul>
+			<li><a href="#doktabs-1">Requirement</a></li>
+			<li><a href="<?php echo $gdwpm_url_tab_dok; ?>">Google Drive API</a></li>
+		</ul>
+			<div id="doktabs-1">
 			<h3>Minimum requirement</h3>
 		<p>
 			PHP <?php echo MINPHP_GDWPM;?> with cURL enabled.
 		</p>
-			<h3>How to generate your Google Drive API Key.</h3>
-		
-		<p>
-			1. Go to https://code.google.com/apis/console/, sign in with your google account. Click Create Project. 
-			<br /><img src="https://docs.google.com/uc?id=0B4hkh-PEv0ZZb1J1aV9QX3NiZ0U&export=view">
-		</p>
-		<p>
-			2. Now click Drive API button to <b>enabling</b> Drive API Services.
-			<br /><img src="https://docs.google.com/uc?id=0B4hkh-PEv0ZZRVJzZHFENFA3bXM&export=view">
-		</p>
-		<p>
-			3. On the left pane of your screen click 'Credentials', click 'CREATE NEW CLIENT ID'. On the popup, pick <b>Service Account</b>, cick 'Create Client ID'.
-			<br /><img src="https://docs.google.com/uc?id=0B4hkh-PEv0ZZV1VZaXlxZkdLSFU&export=view">
-		</p>
-		<p>
-			4. Your *.-privatekey.p12 file will automaticaly downloaded, save it.
-		</p>
-		<p>
-			5. Now you have a Client ID, Email address (Service Account Name), and *.-privatekey.p12 file that recently downloaded.
-		</p>
-		<p>
-			6. Upload your *.-privatekey.p12 file into your web host and remember its Url path.
-		</p>
-		<p><br /></p>
-		<p>
-			File Permissions uploded by this plugin are automatically set to public, which everybody can view or download your files.
-		</p>
-		<p>
-			For more info, please visit https://developers.google.com/drive/web/
-		</p>
+			</div>
+		</div>
 	</div>
 		<h3>About</h3>
 	<div>
@@ -609,7 +639,7 @@ function gdwpm_tombol_opsi_override_eksen(){
 		</p>
 	</div>
 </div>
-<div id="dialog-message" title="Warning">
+<div id="dialog-message" title="Warning" style="display: none;">
   <p>
     <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 50px 0;"></span>
     It seems your api keys haven't properly saved yet. This plugin requires api key to authorize your drive.
@@ -618,7 +648,7 @@ function gdwpm_tombol_opsi_override_eksen(){
     Click the documentation tab for more info.
   </p>
 </div>
-<div id="gdwpm_pringatan_versi_php" title="Warning">
+<div id="gdwpm_pringatan_versi_php" title="Warning" style="display: none;">
   <p>
     <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 50px 0;"></span>
     Sorry, You can't use this plugin with your current PHP version.<br>This plugin requires <b>PHP <?php echo MINPHP_GDWPM;?></b>.<br>
@@ -639,8 +669,6 @@ function gdwpm_tombol_opsi_override_eksen(){
         }
       }
     });
-  });
-  jQuery(function() {
     jQuery( "#dialog-message" ).dialog({
       autoOpen: <?php echo $cek_kunci;?>,
       modal: true,
@@ -712,6 +740,15 @@ function gdwpm_action_callback() {
 				echo 'Setting saved.';
 			}
 		}
+	}elseif(isset($_REQUEST['gdwpm_tabulasi'])){
+		$nonce = $_REQUEST['gdwpm_tabulasi_nonce'];
+		if ( ! wp_verify_nonce( $nonce, 'gdwpm_tabulasi_ajax' ) ) {
+			die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+		} else {
+			if($_REQUEST['gdwpm_tabulasi'] == 'apidoku'){
+				require_once 'google-drive-wp-media-documentation.php';
+			}
+		}
 	}else{
 		$nonce = $_REQUEST['gdwpm_nonce_aplod_berkas'];
 		if ( ! wp_verify_nonce( $nonce, 'gdwpm_satpam_aplod_berkas' ) ) {
@@ -721,6 +758,8 @@ function gdwpm_action_callback() {
 			if (empty($_FILES) || $_FILES["file"]["error"]) {
 				die('<div class="error"><p>Oops.. error, upload failed! '.$_FILES["file"]["error"].'</p></div>');
 			}
+			
+			$service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
 			
 			if (isset($_REQUEST["gdpwm_nama_file"])) {
 				$filename = $_REQUEST["gdpwm_nama_file"];
@@ -858,6 +897,10 @@ class GDWPMBantuan {
                 return $this->_service->$name;
         }
         
+        public function getAbout( ) {
+                return $this->_service->about->get();
+        }
+		
         public function createFile( $name, $mime, $description, $content, Google_ParentReference $fileParent = null ) {
                 $file = new Google_DriveFile();
                 $file->setTitle( $name );
