@@ -46,7 +46,7 @@ Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link
 
 = 0.9 =
 
-* Added Sanitizing for API Key form fields 
+* Added Sanitizing for API Key form fields
 
 = 0.8 =
 
