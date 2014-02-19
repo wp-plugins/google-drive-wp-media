@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Google Drive WP Media
-Plugin URI: http://www.mochamir.com/
-Description: Google Drive on Wordpress Media Publishing.
+Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
+Description: Google Drive on Wordpress Media Publishing. Upload files to Google Drive directly from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 0.9
+Version: 1.0
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '0.9' );
+define( 'VERSI_GDWPM', '1.0' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -316,12 +316,12 @@ if($cek_kunci == 'false'){ ?>
 		<div id="tabs" style="margin:0 -12px 0 -12px;">
 		<ul>
  <?php if (!empty($foldercek)) { ?>
-			<li><a href="#tabs-1">File & Folder List</a></li>
-			<li><a href="#tabs-2">Upload</a></li>
-			<li><a href="#tabs-3">Option</a></li>
-			<li><a href="#tabs-4">Account Information</a></li>
+			<li><a href="#tabs-1"><span style="float:left" class="ui-icon ui-icon-script"></span>&nbsp;File & Folder List</a></li>
+			<li><a href="#tabs-2"><span style="float:left" class="ui-icon ui-icon-star"></span>&nbsp;Upload</a></li>
+			<li><a href="#tabs-3"><span style="float:left" class="ui-icon ui-icon-clipboard"></span>&nbsp;Option</a></li>
+			<li><a href="#tabs-4"><span style="float:left" class="ui-icon ui-icon-heart"></span>&nbsp;Account Information</a></li>
 <?php }else{ ?>
-			<li><a href="#tabs-5">Create Folder</a></li>
+			<li><a href="#tabs-5"><span style="float:left" class="ui-icon ui-icon-folder-collapsed"></span>&nbsp;Create Folder</a></li>
 <?php } ?>
 		</ul>
  <?php if (!empty($foldercek)) { ?>
@@ -352,14 +352,14 @@ function gdwpm_reload_hal()
 					</span>
 				</p>		
 				<div style="display: none" id="gdwpm_loading_gbr">
-				  <center><img src="https://docs.google.com/uc?id=0B2Or6CnfqndYdXoyZEk5eFczTXc&export=view" /><br />Please wait...</center>
+				  <center><img src="<?php echo plugins_url( '/images/animation/ajax_loader_blue_256.gif', __FILE__ );?>" /><br />Please wait...</center>
 				</div>
 				<div id="hasil"></div>
 				<div style="display: none" id="gdwpm_masuk_perpus_teks"><p>Pick a file to include it in the Media Library.</p>
 					<p>
 						<button id="gdwpm_berkas_masuk_perpus" name="gdwpm_berkas_masuk_perpus">Add to Media Library</button>&nbsp;&nbsp;&nbsp; 
 						<span style="display: none" id="gdwpm_add_to_media_gbr">
-							<img src="https://docs.google.com/uc?id=0B2Or6CnfqndYZUpXcmdOeGIxZU0&export=view" />
+							<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
 						</span>
 						<span id="gdwpm_info_masuk_perpus"></span>
 					</p>
@@ -397,7 +397,7 @@ echo $daftarfile;
 					<input type='checkbox' id='gdwpm_cekbok_masukperpus' name='gdwpm_cekbok_masukperpus' value='1' checked /> Add to Media Library. (just linked to, all files still remain in Google Drive)<!-- (Image only: <i>*.jpg, *.jpeg, *.png, & *.gif</i>)--><p>
 					<a style="display:none;" id="gdwpm_start-upload" href="javascript:;"><button id="gdwpm_tombol_upload">Upload to Google Drive</button></a>
 				</div>
-				<img id="gdwpm_loding_128" style="margin: 0 0 0 111px;display:none;" src="http://docs.google.com/uc?id=0B4hkh-PEv0ZZdFBVNm9YWXhDWWM&export=view">
+				<img id="gdwpm_loding_128" style="margin: 0 0 0 111px;display:none;" src="<?php echo plugins_url( '/images/animation/ajax_loader_blue_128.gif', __FILE__ );?>">
  
 <script type="text/javascript"> 
 	var uploader = new plupload.Uploader({
@@ -488,7 +488,7 @@ echo $daftarfile;
 				</div>
 				<button onclick="gdwpm_tombol_opsi_override_eksen();" id="gdwpm_tombol_opsi_override" name="gdwpm_tombol_opsi_override">Save</button>&nbsp;&nbsp;&nbsp; 
 				<span style="display: none" id="gdwpm_cekbok_opsi_override_gbr">
-					<img src="https://docs.google.com/uc?id=0B2Or6CnfqndYZUpXcmdOeGIxZU0&export=view" />
+					<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
 				</span>
 				<span id="gdwpm__cekbok_opsi_override_info"></span>
 <script type="text/javascript">	
@@ -583,44 +583,48 @@ function gdwpm_tombol_opsi_override_eksen(){
 		?>
 		<div id="gdwpm-settingtabs" style="margin:0 -12px 0 -12px;">
 		<ul>
-			<li><a href="#gdwpm-settingtabs-1">Google Drive API Key</a></li>
-			<li><a href="<?php echo $gdwpm_url_tab_themeset; ?>">Themes</a></li>
+			<li><a href="#gdwpm-settingtabs-1"><span style="float:left" class="ui-icon ui-icon-key"></span>&nbsp;Google Drive API Key</a></li>
+			<li><a href="<?php echo $gdwpm_url_tab_themeset; ?>"><span style="float:left" class="ui-icon ui-icon-video"></span>&nbsp;Themes</a></li>
 		</ul>
 			<div id="gdwpm-settingtabs-1">
 		
 		<div style="margin-left:15px;">
 			<table>
 				<tr>
-					<td width="30%">
-			<form name="gdwpm_isi_akun" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
-						Google Email: 
-					</td>
 					<td>
-						<input type="text" name="gdwpm_imel" value="<?php echo $gdwpm_opt_akun[0];?>"  title="Use this Email to share with. eg: youremail@gmail.com" size="55">
+			<form name="gdwpm_isi_akun" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
+						Google Email
+					</td>
+					<td>: </td>
+					<td>
+						<input type="text" name="gdwpm_imel" value="<?php echo $gdwpm_opt_akun[0];?>"  title="Use this Email to share with. eg: youremail@gmail.com" size="35">
 					</td>
 				</tr>
 				<tr>
 					<td>
-						Client ID: 
+						Client ID
 					</td>
+					<td>: </td>
 					<td>
 						<input type="text" name="gdwpm_klaen_aidi" value="<?php echo $gdwpm_opt_akun[1];?>"  title="eg: 123456789.apps.googleusercontent.com" size="55">
 					</td>
 				</tr>
 				<tr>
 					<td>
-						Service Account Name: 
+						Service Account Name
 					</td>
+					<td>: </td>
 					<td>
 						<input type="text" name="gdwpm_nama_service" value="<?php echo $gdwpm_opt_akun[2];?>"  title="eg: 123456789@developer.gserviceaccount.com" size="55">
 					</td>
 				</tr>
 				<tr>
 					<td>
-				Private Key Url Path: 
+				Private Key Url Path
 					</td>
+					<td>: </td>
 					<td>
-						<input type="text" name="gdwpm_kunci_rhs" value="<?php echo $gdwpm_opt_akun[3];?>"  title="eg: http://yourdomain.com/path/to/123xxx-privatekey.p12." size="55">
+						<input type="text" name="gdwpm_kunci_rhs" value="<?php echo $gdwpm_opt_akun[3];?>"  title="eg: http://yourdomain.com/path/to/123xxx-privatekey.p12." size="75">
 					</td>
 				</tr>
 			</table>
@@ -646,13 +650,16 @@ function gdwpm_tombol_opsi_override_eksen(){
 		?>
 		<div id="doktabs" style="margin:0 -12px 0 -12px;">
 		<ul>
-			<li><a href="#doktabs-1">Requirement</a></li>
-			<li><a href="<?php echo $gdwpm_url_tab_dok; ?>">Google Drive API</a></li>
+			<li><a href="#doktabs-1"><span style="float:left" class="ui-icon ui-icon-note"></span>&nbsp;Requirements</a></li>
+			<li><a href="<?php echo $gdwpm_url_tab_dok; ?>"><span style="float:left" class="ui-icon ui-icon-suitcase"></span>&nbsp;Google Drive API</a></li>
 		</ul>
 			<div id="doktabs-1">
-			<h3>Minimum requirement</h3>
+			<h3>Minimum requirements</h3>
 		<p>
 			PHP <?php echo MINPHP_GDWPM;?> with cURL enabled.
+		</p>
+		<p>
+			<span style="float:left" class="ui-icon ui-icon-info"></span>&nbsp;Your PHP version is <b><?php echo phpversion();?></b> and cURL <?php if(function_exists('curl_version')){$curlver = curl_version(); echo 'version is '.$curlver['version'];}else{echo 'was disabled';} ?>.
 		</p>
 			</div>
 		</div>
