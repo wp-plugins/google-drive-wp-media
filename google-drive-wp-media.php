@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: Google Drive on Wordpress Media Publishing. Upload files to Google Drive directly from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 1.0
+Version: 1.1
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '1.0' );
+define( 'VERSI_GDWPM', '1.1' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -42,44 +42,51 @@ $gdwpm_override_optional = get_option('gdwpm_override_dir_bawaan'); // cekbok, p
 
 if($gdwpm_override_optional[0] == 'checked' && !empty($gdwpm_override_optional[1])){
 
-	add_filter('wp_handle_upload_prefilter', 'custom_upload_filter' );
+	add_filter('wp_handle_upload_prefilter', 'gdwpm_custom_upload_filter' );
 
-	function custom_upload_filter( $file ){
-		global $cek_kunci, $gdwpm_opt_akun, $service, $gdwpm_apiConfig, $gdwpm_override_optional;
+	function gdwpm_custom_upload_filter( $file ){
+		$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, service akun, private key
+		if(!empty($gdwpm_opt_akun[1]) && !empty($gdwpm_opt_akun[2]) && !empty($gdwpm_opt_akun[3])){
 		
-		$filename = $file['name'];
-		$path = $file['tmp_name'];
-		$mime_berkas = $file['type'];
-		//$mime_berkas = sanitize_mime_type($mime_berkas);
-		$folder_ortu = preg_replace("/[^a-zA-Z0-9]+/", " ", $gdwpm_override_optional[1]);
-		$folder_ortu = sanitize_text_field($folder_ortu);
-		
-		if($folder_ortu != ''){
-			$folderId = $service->getFileIdByName( $folder_ortu );
-		}
-		
-		$content = '';
+			global $gdwpm_override_optional;
+			
+			$gdwpm_service_ride = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
+			
+			$filename = $file['name'];
+			$path = $file['tmp_name'];
+			$mime_berkas = $file['type'];
+			//$mime_berkas = sanitize_mime_type($mime_berkas);
+			$folder_ortu = preg_replace("/[^a-zA-Z0-9]+/", " ", $gdwpm_override_optional[1]);
+			$folder_ortu = sanitize_text_field($folder_ortu);
+			
+			if($folder_ortu != ''){
+				$folderId = $gdwpm_service_ride->getFileIdByName( $folder_ortu );
+			}
+			
+			$content = '';
 
-		if( ! $folderId ) {
-			$folderId = $service->createFolder( $folder_ortu );
-			$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
-		}
+			if( ! $folderId ) {
+				$folderId = $gdwpm_service_ride->createFolder( $folder_ortu );
+				$gdwpm_service_ride->setPermissions( $folderId, $gdwpm_opt_akun[0] );
+			}
 
-		$fileParent = new Google_ParentReference();
-		$fileParent->setId( $folderId );
-		$fileId = $service->createFileFromPath( $path, $filename, $content, $fileParent );
-		$service->setPermissions( $fileId, 'me', 'reader', 'anyone' );
-		
-		$sukinfo = '';
-		if(!empty($mime_berkas)){// && isset($_POST['masukperpus'])){
-			gdwpm_ijin_masuk_perpus($mime_berkas, $filename, $fileId, $content);
-			$sukinfo = ' and added into your Media Library';
+			$fileParent = new Google_ParentReference();
+			$fileParent->setId( $folderId );
+			$fileId = $gdwpm_service_ride->createFileFromPath( $path, $filename, $content, $fileParent );
+			$gdwpm_service_ride->setPermissions( $fileId, 'me', 'reader', 'anyone' );
+			
+			$sukinfo = '';
+			if(!empty($mime_berkas) && $gdwpm_override_optional[2] == 'checked'){
+				gdwpm_ijin_masuk_perpus($mime_berkas, $filename, $fileId, $content);
+				$sukinfo = ' and added into your Media Library';
+			}
+			
+			echo '<div class="updated"><p>Done! <strong>'.$fileId.'</strong> successfully uploaded into <strong>'.$folder_ortu.'</strong>'.$sukinfo.'.</p></div>';
+			exit();
+		}else{
+			return $file;
 		}
-		
-		echo '<div class="updated"><p>Done! <strong>'.$fileId.'</strong> successfully uploaded into folder <strong>'.$folder_ortu.'</strong>'.$sukinfo.'.</p></div>';
-		exit();
 	}
-	
 }
 
 //////////////// HALAMAN MEDIA MENU ///////////////
@@ -136,7 +143,7 @@ function gdwpm_filter_gbrurl( $url ){
 }
 
 function gdwpm_halaman_utama() {
-	global $cek_kunci, $gdwpm_opt_akun, $service, $gdwpm_apiConfig;
+	global $cek_kunci, $gdwpm_opt_akun, $gdwpm_service, $gdwpm_apiConfig;
 $cek_kunci = 'true'; // kosong
 	if (isset($_POST['gdwpm_akun_nonce']))
 	{
@@ -154,17 +161,17 @@ $cek_kunci = 'true'; // kosong
 				
 				$gdwpm_opt = array($gdwpm_opt_imel, $gdwpm_opt_klaen_aidi, $gdwpm_opt_nama_service, $gdwpm_opt_kunci_rhs);
 				update_option('gdwpm_akun_opt', $gdwpm_opt);
-				echo '<div class="updated"><p>Great! All API settings successfuly saved.</p></div>';
+				echo '<div class="updated"><p>Great! All API settings successfully saved.</p></div>';
 			}else{
 				echo '<div class="error"><p>All fields are required.</p></div>';
 			}
 		}
 	}
-$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, service akun, private key
+$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, gdwpm_service akun, private key
 if($gdwpm_opt_akun){
 $cek_kunci = 'false';
 //$gdwpm_apiConfig['use_objects'] = true;
-$service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
+$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
 }
 
 if (isset($_POST['gdwpm_gawe_folder_nonce']))
@@ -178,11 +185,11 @@ if (isset($_POST['gdwpm_gawe_folder_nonce']))
 			{
 				$gawe_folder = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdwpm_gawe_folder']);
 				$gawe_folder = sanitize_text_field($gawe_folder);
-				$folderId = $service->getFileIdByName( $gawe_folder );
+				$folderId = $gdwpm_service->getFileIdByName( $gawe_folder );
 
 				if( ! $folderId ) {
-					$folderId = $service->createFolder( $gawe_folder );
-					$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
+					$folderId = $gdwpm_service->createFolder( $gawe_folder );
+					$gdwpm_service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
 					echo '<div class="updated"><p>Great! Folder name <strong>'.$gawe_folder.'</strong> successfully created.</p></div>';
 				}else{
 					echo '<div class="error"><p>Folder '.$gawe_folder.' already exist</p></div>';
@@ -279,7 +286,7 @@ jQuery(function() {
 			if ($pageToken) {
 				$parameters['pageToken'] = $pageToken;
 			}
-			$files = $service->files->listFiles($parameters);
+			$files = $gdwpm_service->files->listFiles($parameters);
 
 			$result = array_merge($result, $files->getItems());
 			$pageToken = $files->getNextPageToken();
@@ -344,7 +351,7 @@ function gdwpm_reload_hal()
 						<br />
 						Google Docs Viewer: https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<b>YOUR-FILE-ID-HERE</b>%26export%3Dview
 						<?php
-							$ebot = $service->getAbout();
+							$ebot = $gdwpm_service->getAbout();
 							echo '<br /><br />Storage Usage<br />Total quota: '.size_format($ebot->getQuotaBytesTotal(), 2).'<br />
 							Used quota: '.size_format($ebot->getQuotaBytesUsed(), 2).'<br />
 							Available space: '.size_format($ebot->getQuotaBytesTotal() - $ebot->getQuotaBytesUsed(), 2).'<br />';
@@ -475,16 +482,19 @@ echo $daftarfile;
 				$gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 				?>
 				<p>
-					<a onclick="gdwpm_cekbok_opsi_override_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_override' name='gdwpm_cekbok_opsi_override' value='1' <?php echo $gdwpm_override[0];?>/></a> 
+					<a onclick="gdwpm_cekbok_opsi_override_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_override' name='gdwpm_cekbok_opsi_override' value='1' <?php echo $gdwpm_override[0];?> /></a> 
 					Google Drive as Default Media Upload Storage. (experimental)<br />
 					&nbsp;<dfn>This option will change your default upload dir (<?php $def_upload_dir = wp_upload_dir(); echo $def_upload_dir['baseurl'];?>) to Google Drive. 
-					That's mean, when you upload files through default uploader (eg: Media >> Add New) it will automatically uploading your files to Google Drive.</dfn>
+					This mean, when you upload files through default uploader (eg: Media >> Add New) it will automatically uploading your files to Google Drive.</dfn>
 				</p>
 				<div id="gdwpm_folder_opsi_override_eksen" style="margin-left:15px;display: <?php if ($gdwpm_override[0] == 'checked') { echo 'block;';}else{echo 'none;';}?>">
 					<p>
 						Google Drive folder name<br />
-						<input type="text" id="gdwpm_folder_opsi_override_teks" name="gdwpm_folder_opsi_override_teks" value="<?php echo $gdwpm_override[1];?>" size="35" placeholder="Required (auto create if not exist)" />	
-					</p>					
+						<input type="text" id="gdwpm_folder_opsi_override_teks" name="gdwpm_folder_opsi_override_teks" value="<?php echo $gdwpm_override[1];?>" size="35" placeholder="Required (auto create if not exist)" />
+					</p>
+					<p>
+						<input type='checkbox' id='gdwpm_cekbok_masukperpus_override' name='gdwpm_cekbok_masukperpus_override' value='1' <?php echo $gdwpm_override[2];?> /> Add to Media Library.
+					</p>
 				</div>
 				<button onclick="gdwpm_tombol_opsi_override_eksen();" id="gdwpm_tombol_opsi_override" name="gdwpm_tombol_opsi_override">Save</button>&nbsp;&nbsp;&nbsp; 
 				<span style="display: none" id="gdwpm_cekbok_opsi_override_gbr">
@@ -505,13 +515,19 @@ function gdwpm_tombol_opsi_override_eksen(){
 	}else{
 		var gdwpm_cekbok = '';
 	}
+	if (jQuery('#gdwpm_cekbok_masukperpus_override').prop('checked')){
+		var gdwpm_cekbok_masukperpus = 'checked';
+	}else{
+		var gdwpm_cekbok_masukperpus = '';
+	}
 		jQuery("#gdwpm_cekbok_opsi_override_gbr").show();
 		jQuery('#gdwpm__cekbok_opsi_override_info').empty();
 		var data = {
 			action: 'gdwpm_on_action',
 			gdwpm_override_nonce: '<?php echo $gdwpm_override_nonce; ?>',
 			gdwpm_cekbok_opsi_value: gdwpm_cekbok ,
-			gdwpm_folder_opsi_value: jQuery('#gdwpm_folder_opsi_override_teks').val()
+			gdwpm_folder_opsi_value: jQuery('#gdwpm_folder_opsi_override_teks').val() ,
+			gdwpm_cekbok_masukperpus_override: gdwpm_cekbok_masukperpus
 		};
 		jQuery.post(ajax_object.ajax_url, data, function(hasil) {
 			jQuery('#gdwpm_cekbok_opsi_override_gbr').hide();
@@ -814,15 +830,15 @@ function gdwpm_ijin_masuk_perpus($jenis_berkas, $nama_berkas, $id_berkas, $deskr
 ///////////// AJAX EKSYEN /////////////// ajax admin url =====>  gdwpm_on_action
 add_action( 'wp_ajax_gdwpm_on_action', 'gdwpm_action_callback' );
 function gdwpm_action_callback() {
-	global $wpdb, $cek_kunci, $gdwpm_opt_akun, $service, $gdwpm_apiConfig;
-	$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, service akun, private key
+	global $wpdb, $cek_kunci, $gdwpm_opt_akun, $gdwpm_service, $gdwpm_apiConfig;
+	$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, gdwpm_service akun, private key
 
 	if(isset($_POST['folder_pilian'])){
 	$gdwpm_apiConfig['use_objects'] = true;
-	$service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
+	$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
 		$folder_pilian =  $_POST['folder_pilian'] ;
 		$fld = $_POST['folder_pilian'];
-		$daftar_berkas = $service->getFilesInFolder($fld);
+		$daftar_berkas = $gdwpm_service->getFilesInFolder($fld);
 		$daftarfile = $daftar_berkas[0];
 		$i = $daftar_berkas[1];
 		
@@ -851,7 +867,7 @@ function gdwpm_action_callback() {
 			if(empty($folder_bawaan) && $_POST['gdwpm_cekbok_opsi_value'] == 'checked'){
 				echo 'Folder name cannot be empty!';
 			}else{
-				$gdwpm_cekbok = array($_POST['gdwpm_cekbok_opsi_value'], $folder_bawaan);
+				$gdwpm_cekbok = array($_POST['gdwpm_cekbok_opsi_value'], $folder_bawaan, $_POST['gdwpm_cekbok_masukperpus_override']);
 				update_option('gdwpm_override_dir_bawaan', $gdwpm_cekbok);	
 				echo 'Option saved.';
 			}
@@ -893,7 +909,7 @@ function gdwpm_action_callback() {
 				die('<div class="error"><p>Oops.. error, upload failed! '.$_FILES["file"]["error"].'</p></div>');
 			}
 			
-			$service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
+			$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
 			
 			if (isset($_REQUEST["gdpwm_nama_file"])) {
 				$filename = $_REQUEST["gdpwm_nama_file"];
@@ -977,22 +993,22 @@ function gdwpm_action_callback() {
 				$nama_polder = $_POST['gdpwm_nm_bks'];
 				
 				if($folder_ortu != ''){
-					$folderId = $service->getFileIdByName( $folder_ortu );
+					$folderId = $gdwpm_service->getFileIdByName( $folder_ortu );
 					$nama_polder = $_POST['gdpwm_nm_br'];
 				}
 				
 				$content = $_POST['gdpwm_sh_ds'];
 
 				if( ! $folderId ) {
-						$folderId = $service->createFolder( $folder_ortu );
-						$service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
+						$folderId = $gdwpm_service->createFolder( $folder_ortu );
+						$gdwpm_service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
 				}
 
 				$fileParent = new Google_ParentReference();
 				$fileParent->setId( $folderId );				
 				
-				$fileId = $service->createFileFromPath( $filePath, $filename, $content, $fileParent );
-				$service->setPermissions( $fileId, 'me', 'reader', 'anyone' );
+				$fileId = $gdwpm_service->createFileFromPath( $filePath, $filename, $content, $fileParent );
+				$gdwpm_service->setPermissions( $fileId, 'me', 'reader', 'anyone' );
 				
 				$sukinfo = '';
 				if(!empty($mime_berkas) && $_POST['gdpwm_med_ly'] == '1'){
@@ -1090,7 +1106,7 @@ class GDWPMBantuan {
 					$parameters['pageToken'] = $pageToken;
 				}
 				$children = $this->_service->children->listChildren($folderId, $parameters);
-				$daftarfile =  '<div id="hasil"><table id="box-table-a" summary="File Folder"><thead><tr><th scope="col"><span class="ui-icon ui-icon-check"></span></th><th scope="col">File ID</th><th scope="col">Title</th><!--<th scope="col">Description</th>--><th scope="col">Shared</th><th scope="col">Option</th></tr></thead>';
+				$daftarfile =  '<div id="hasil"><table id="box-table-a" summary="File Folder"><thead><tr><th scope="col"><span class="ui-icon ui-icon-check"></span></th><th scope="col">File ID</th><th scope="col">Title</th><!--<th scope="col">Description</th>--><th scope="col">Shared</th><th scope="col">Action</th></tr></thead>';
 				$i = 0;
 				foreach ($children->getItems() as $child) {
 					$i++; if($i == 1){$checked = 'checked';}else{$checked = '';}
