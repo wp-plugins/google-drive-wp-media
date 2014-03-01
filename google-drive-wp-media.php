@@ -2,7 +2,7 @@
 /*
 Plugin Name: Google Drive WP Media
 Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
-Description: Google Drive on Wordpress Media Publishing. Upload files to Google Drive directly from WordPress blog.
+Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
 Version: 1.1
