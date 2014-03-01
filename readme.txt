@@ -8,11 +8,11 @@ Stable tag: 1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Upload files to Google Drive from WordPress blog. Make Google Drive as your upload files hosting storage.
+WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 
 == Description ==
 
-Google Drive on Wordpress Media Publishing. Direct access to your Google Drive, you will enable to manage your files remotely from your WordPress blog.
+Google Drive on Wordpress Media Publishing. Direct access to your Google Drive, allow you to manage your files remotely from your WordPress blog.
 Upload and share your files directly from your WordPress blog to Google Drive.
 
 Features:
