@@ -4,7 +4,7 @@ Donate link: http://www.mochamir.com/
 Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
 Requires at least: 3.1
 Tested up to: 3.8.1
-Stable tag: 1.1
+Stable tag: 1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,6 +24,7 @@ Features:
 * Enable to attach any files to posts.
 * 700kb chunked for handle uploading large files.
 * Displaying current storage space.
+* Create WordPress image galleries.
 
 Required:
 
@@ -43,6 +44,10 @@ Required:
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 1.2 =
+
+* Image size bug fixed
 
 = 1.1 =
 

@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 1.1
+Version: 1.2
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '1.1' );
+define( 'VERSI_GDWPM', '1.2' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -816,14 +816,23 @@ function gdwpm_tombol_opsi_override_eksen(){
 
 }
 
-function gdwpm_ijin_masuk_perpus($jenis_berkas, $nama_berkas, $id_berkas, $deskrip_berkas){
+function gdwpm_ijin_masuk_perpus($jenis_berkas, $nama_berkas, $id_berkas, $deskrip_berkas, $gdwpm_lebar_gbr = '', $gdwpm_tinggi_gbr = ''){  
 	// ADD TO LIBRARY
 	$meta = array('aperture' => 0, 'credit' => '', 'camera' => '', 'caption' => $nama_berkas, 'created_timestamp' => 0, 'copyright' => '',  
 				'focal_length' => 0, 'iso' => 0, 'shutter_speed' => 0, 'title' => $nama_berkas); 
 	$attachment = array( 'post_mime_type' => $jenis_berkas, 'guid' => 'G_D_W_P_M-file_ID/'.$id_berkas,
 				'post_parent' => 0,	'post_title' => $nama_berkas, 'post_content' => $deskrip_berkas);
 	$attach_id = wp_insert_attachment( $attachment, 'G_D_W_P_M-file_ID/'.$id_berkas, 0 );
-	$metadata = array("image_meta" => $meta, "width" => '', "height" => '', "gdwpm"=>TRUE); 
+
+	if(strpos($jenis_berkas, 'image') !== false){
+		$gdwpm_ukur_gambar    = getimagesize('https://docs.google.com/uc?id=' . $id_berkas. '&export=view');
+		$gdwpm_lebar_gbr  = $gdwpm_ukur_gambar[0];
+		$gdwpm_tinggi_gbr = $gdwpm_ukur_gambar[1];
+		//$ukuran = array('thumbnail' => array('file' => 'G_D_W_P_M-file_ID/'.$id_berkas, 'width' => '150', 'height' => '150'));
+		//, 'size' => $ukuran
+	}
+	
+	$metadata = array("image_meta" => $meta, "width" => $gdwpm_lebar_gbr, "height" => $gdwpm_tinggi_gbr, 'file' => 'G_D_W_P_M-file_ID/'.$id_berkas, "gdwpm"=>TRUE); 
     wp_update_attachment_metadata( $attach_id,  $metadata);	
 }
 
