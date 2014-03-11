@@ -40,6 +40,12 @@ Required:
 
 == Frequently Asked Questions ==
 
+= I got a problem and the message is "An error occurred: Unable to parse the p12 file. Is this a .p12 file? Is the password correct? OpenSSL error:". what I missed? =
+The error reported that was 'Unable to parse the p12 file', have you write the correct url path of p12 file.? can you access or download it via web browser? in addition if your domain setting use non-www or www only, then you have to add/remove www in url path.
+
+= I got a problem and the message is "An error occurred: Error refreshing the OAuth2 token, message: '{ "error" : "invalid_grant" }'". what I missed? =
+There's something wrong (typo or something) w/ your Service Account Name setting. Please make sure, there's no white space in the form fields. especially Service Account Name field.
+
 = How to insert zip file into post as a Google Drive link, not linked to attachment page? =
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
@@ -112,3 +118,6 @@ Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link
 2. Files & Folder List
 3. Media Menu
 4. Media Library Attachment
+
+== Upgrade Notice ==
+None
