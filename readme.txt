@@ -111,6 +111,7 @@ Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link
 * Initial release, it's a beta version.
 
 == Upgrade Notice ==
+None
 
 == Screenshots ==
 
@@ -118,6 +119,3 @@ Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link
 2. Files & Folder List
 3. Media Menu
 4. Media Library Attachment
-
-== Upgrade Notice ==
-None
