@@ -53,8 +53,6 @@ Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link
 
 = 1.3 =
 
-* maxResults parameter added
-* WP Enqueue style added
 * Added new option to rewrite urls
 
 = 1.2 =
