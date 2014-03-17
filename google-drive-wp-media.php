@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 1.2
+Version: 1.3
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '1.2' );
+define( 'VERSI_GDWPM', '1.3' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -202,8 +202,11 @@ if (isset($_POST['gdwpm_gawe_folder_nonce']))
 
 $gdwpm_theme_css_pilian = get_option('gdwpm_nama_theme_css');
 if(empty($gdwpm_theme_css_pilian)){$gdwpm_theme_css_pilian = 'smoothness';}
+wp_enqueue_style('gdwpm-jqueryui-theme',
+                'http://ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/' . $gdwpm_theme_css_pilian . '/jquery-ui.css',
+                false,
+                VERSI_GDWPM);
 ?>
-<link id='gdwpm_cs_style' type='text/css' rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/<?php echo $gdwpm_theme_css_pilian;?>/jquery-ui.css">
 <script>
 jQuery(function() {
     var icons = {
@@ -481,6 +484,7 @@ echo $daftarfile;
 				$gdwpm_override = get_option('gdwpm_override_dir_bawaan'); // cekbok, polder
 				$gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 				?>
+				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
 				<p>
 					<a onclick="gdwpm_cekbok_opsi_override_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_override' name='gdwpm_cekbok_opsi_override' value='1' <?php echo $gdwpm_override[0];?> /></a> 
 					Google Drive as Default Media Upload Storage. (experimental)<br />
@@ -501,6 +505,7 @@ echo $daftarfile;
 					<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
 				</span>
 				<span id="gdwpm__cekbok_opsi_override_info"></span>
+				</div>
 <script type="text/javascript">	
 function gdwpm_cekbok_opsi_override_eksen(){
 	if (jQuery('#gdwpm_cekbok_opsi_override').prop('checked')){
@@ -532,6 +537,107 @@ function gdwpm_tombol_opsi_override_eksen(){
 		jQuery.post(ajax_object.ajax_url, data, function(hasil) {
 			jQuery('#gdwpm_cekbok_opsi_override_gbr').hide();
 			jQuery('#gdwpm__cekbok_opsi_override_info').html(hasil);
+		});
+}
+</script>		
+				<br />
+<?php $gdwpm_dummy_fol = get_option('gdwpm_dummy_folder'); ?>
+				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
+					<p>
+					<a onclick="gdwpm_cekbok_opsi_dummy_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_dummy' name='gdwpm_cekbok_opsi_dummy' value='1' <?php echo $gdwpm_dummy_fol;?> /></a>
+					Enable Dummy Image URL. (Rewrite original Google Drive image URL)<br />
+					&nbsp;<dfn>When you add an image into Media Library (auto or manually), this option will rewrite original Google Drive Image URL to internal dummy URL. (eg: 'https://docs.google.com/uc?id=google-drive-file-id&export=view' will be something like '<?php echo $def_upload_dir['baseurl'];?>/gdwpm_images/google-drive-file-id.jpg')</dfn>
+					</p>
+					<div id="gdwpm_folder_opsi_dummy_eksen" style="margin-left:15px;display: <?php if ($gdwpm_dummy_fol == 'checked') { echo 'block;';}else{echo 'none;';}?>">
+						<p>
+<?php
+$tulis_htacc = '<textarea rows="4" cols="70">RewriteEngine on' . "\n";
+$tulis_htacc .= 'RewriteBase /' . "\n";
+$tulis_htacc .= 'RewriteRule ^(.*)/?.jpg$ wp-content/uploads/gdwpm_images/index.php?imgid=$1 [L]</textarea>';
+
+$tulis_php = '<textarea rows="7" cols="70"><?php' . "\n";
+$tulis_php .= 'header("Content-Type: image/jpg");' . "\n";
+$tulis_php .= 'if (isset($_GET[\'imgid\'])){' . "\n";
+$tulis_php .= '$gdurl = "https://docs.google.com/uc?id=$_GET[\'imgid\']&export=view";' . "\n";
+$tulis_php .= 'readfile($gdurl);' . "\n";
+$tulis_php .= '}' . "\n";	
+$tulis_php .= '?></textarea>';
+
+$upload_dir = wp_upload_dir();
+$nama_ploder = 'gdwpm_images';
+$fulldir = $upload_dir['basedir'] . '/' . $nama_ploder;
+$gdwpm_cek_folder_dummy = 'not exist. Because this plugin was failed to create this folder, you have to create it manually. Create a new directory inside your uploads directory';
+$gdwpm_cek_index_dummy = 'not exist. Because this plugin was failed to create this file, you have to create it manually. Copy the following code:<br />'.$tulis_php.'<br />and save it as index.php, place it inside folder named gdwpm_images.';	
+$gdwpm_cek_htaccess_dummy = 'not exist. Because this plugin was failed to create this file, you have to create it manually. Copy the following code:<br />'.$tulis_htacc.'<br />and save it as .htaccess, place it inside folder named gdwpm_images.';	
+
+if(is_dir($fulldir)){
+	$gdwpm_cek_folder_dummy = 'exist (ok)';
+	if(file_exists($fulldir . '/index.php')){
+		$gdwpm_cek_index_dummy = 'exist (ok)';
+	}
+	if(file_exists($fulldir . '/.htaccess')){
+		$gdwpm_cek_htaccess_dummy = 'exist (ok)';
+	}
+}
+if($gdwpm_cek_folder_dummy == 'exist (ok)' && $gdwpm_cek_index_dummy == 'exist (ok)' && $gdwpm_cek_htaccess_dummy == 'exist (ok)'){
+	$gdwpm_tombolsimpen_siap = '';
+}else{
+	$gdwpm_tombolsimpen_siap = 'disabled';
+	update_option('gdwpm_dummy_folder', '');	
+}
+?>
+						</p>
+						<p>
+						To enable this option, you have to meet the following requirements:<br />
+						<table>
+							<tr>
+							<th>Required</th><th></th><th>Status</th>
+							</tr>
+							<tr>
+								<td>gdwpm_images folder</td><td> : </td>
+								<td><?php echo $gdwpm_cek_folder_dummy;?></td>
+							</tr>
+							<tr>
+								<td>index.php file</td><td> : </td>
+								<td><?php echo $gdwpm_cek_index_dummy;?></td>
+							</tr>
+							<tr>
+								<td>.htaccess file</td><td> : </td>
+								<td><?php echo $gdwpm_cek_htaccess_dummy;?></td>
+							</tr>
+						</table>
+						</p>
+					</div>
+					<button onclick="gdwpm_tombol_opsi_dummy_eksen();" id="gdwpm_tombol_opsi_dummy" name="gdwpm_tombol_opsi_dummy" <?php echo $gdwpm_tombolsimpen_siap;?>>Save</button>&nbsp;&nbsp;&nbsp; 
+					<span style="display: none" id="gdwpm_cekbok_opsi_dummy_gbr">
+						<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
+					</span>
+					<span id="gdwpm__cekbok_opsi_dummy_info"></span>
+				</div>
+<script type="text/javascript">	
+function gdwpm_cekbok_opsi_dummy_eksen(){
+	if (jQuery('#gdwpm_cekbok_opsi_dummy').prop('checked')){
+		document.getElementById("gdwpm_folder_opsi_dummy_eksen").style.display = "block";
+	}else{
+		document.getElementById("gdwpm_folder_opsi_dummy_eksen").style.display = "none";
+	}
+}
+function gdwpm_tombol_opsi_dummy_eksen(){
+	if (jQuery('#gdwpm_cekbok_opsi_dummy').prop('checked')){
+		var gdwpm_cekbok = 'checked';
+	}else{
+		var gdwpm_cekbok = '';
+	}
+		jQuery("#gdwpm_cekbok_opsi_dummy_gbr").show();
+		jQuery('#gdwpm__cekbok_opsi_dummy_info').empty();
+		var data = {
+			action: 'gdwpm_on_action',
+			gdwpm_override_nonce: '<?php echo $gdwpm_override_nonce; ?>',
+			gdwpm_cekbok_opsi_dummy: gdwpm_cekbok
+		};
+		jQuery.post(ajax_object.ajax_url, data, function(hasil) {
+			jQuery('#gdwpm_cekbok_opsi_dummy_gbr').hide();
+			jQuery('#gdwpm__cekbok_opsi_dummy_info').html(hasil);
 		});
 }
 </script>		
@@ -598,64 +704,62 @@ function gdwpm_tombol_opsi_override_eksen(){
 			$gdwpm_url_tab_themeset = admin_url( 'admin-ajax.php?action=gdwpm_on_action&gdwpm_tabulasi=themeset&gdwpm_tabulasi_themeset_nonce=') . $gdwpm_tabulasi_themeset_nonce;
 		?>
 		<div id="gdwpm-settingtabs" style="margin:0 -12px 0 -12px;">
-		<ul>
-			<li><a href="#gdwpm-settingtabs-1"><span style="float:left" class="ui-icon ui-icon-key"></span>&nbsp;Google Drive API Key</a></li>
-			<li><a href="<?php echo $gdwpm_url_tab_themeset; ?>"><span style="float:left" class="ui-icon ui-icon-video"></span>&nbsp;Themes</a></li>
-		</ul>
+			<ul>
+				<li><a href="#gdwpm-settingtabs-1"><span style="float:left" class="ui-icon ui-icon-key"></span>&nbsp;Google Drive API Key</a></li>
+				<li><a href="<?php echo $gdwpm_url_tab_themeset; ?>"><span style="float:left" class="ui-icon ui-icon-video"></span>&nbsp;Themes</a></li>
+			</ul>
 			<div id="gdwpm-settingtabs-1">
-		
-		<div style="margin-left:15px;">
-			<table>
-				<tr>
-					<td>
-			<form name="gdwpm_isi_akun" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
-						Google Email
-					</td>
-					<td>: </td>
-					<td>
-						<input type="text" name="gdwpm_imel" value="<?php echo $gdwpm_opt_akun[0];?>"  title="Use this Email to share with. eg: youremail@gmail.com" size="35">
-					</td>
-				</tr>
-				<tr>
-					<td>
-						Client ID
-					</td>
-					<td>: </td>
-					<td>
-						<input type="text" name="gdwpm_klaen_aidi" value="<?php echo $gdwpm_opt_akun[1];?>"  title="eg: 123456789.apps.googleusercontent.com" size="55">
-					</td>
-				</tr>
-				<tr>
-					<td>
-						Service Account Name
-					</td>
-					<td>: </td>
-					<td>
-						<input type="text" name="gdwpm_nama_service" value="<?php echo $gdwpm_opt_akun[2];?>"  title="eg: 123456789@developer.gserviceaccount.com" size="55">
-					</td>
-				</tr>
-				<tr>
-					<td>
-				Private Key Url Path
-					</td>
-					<td>: </td>
-					<td>
-						<input type="text" name="gdwpm_kunci_rhs" value="<?php echo $gdwpm_opt_akun[3];?>"  title="eg: http://yourdomain.com/path/to/123xxx-privatekey.p12." size="75">
-					</td>
-				</tr>
-			</table>
-				<br />
-				
-				<?php $gdwpm_akun_nonce = wp_create_nonce( "gdwpm_akun_nonce" ); ?>
-		
-					<input type="hidden" name="gdwpm_akun_nonce" value="<?php echo $gdwpm_akun_nonce;?>">
-					<p style="margin-left:35px;">
-						<button type="submit" id="simpen_gdwpm_akun"><?php _e('Save') ?></button>
-					</p>		
-			</form>
+			
+				<table>
+					<tr>
+						<td>
+				<form name="gdwpm_isi_akun" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
+							Google Email
+						</td>
+						<td>: </td>
+						<td>
+							<input type="text" name="gdwpm_imel" value="<?php echo $gdwpm_opt_akun[0];?>"  title="Use this Email to share with. eg: youremail@gmail.com" size="35">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Client ID
+						</td>
+						<td>: </td>
+						<td>
+							<input type="text" name="gdwpm_klaen_aidi" value="<?php echo $gdwpm_opt_akun[1];?>"  title="eg: 123456789.apps.googleusercontent.com" size="55">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							Service Account Name
+						</td>
+						<td>: </td>
+						<td>
+							<input type="text" name="gdwpm_nama_service" value="<?php echo $gdwpm_opt_akun[2];?>"  title="eg: 123456789@developer.gserviceaccount.com" size="55">
+						</td>
+					</tr>
+					<tr>
+						<td>
+					Private Key Url Path
+						</td>
+						<td>: </td>
+						<td>
+							<input type="text" name="gdwpm_kunci_rhs" value="<?php echo $gdwpm_opt_akun[3];?>"  title="eg: http://yourdomain.com/path/to/123xxx-privatekey.p12." size="75">
+						</td>
+					</tr>
+				</table>
+					<br />
+					
+					<?php $gdwpm_akun_nonce = wp_create_nonce( "gdwpm_akun_nonce" ); ?>
+			
+						<input type="hidden" name="gdwpm_akun_nonce" value="<?php echo $gdwpm_akun_nonce;?>">
+						<p style="margin-left:35px;">
+							<button type="submit" id="simpen_gdwpm_akun"><?php _e('Save') ?></button>
+						</p>		
+				</form>
 			</div>
-			</div>
-			</div>
+		</div>
 	</div>
 <?php }else{$cek_kunci = 'false';} ?>
 		<h3>Documentation</h3>
@@ -808,8 +912,15 @@ function gdwpm_tombol_opsi_override_eksen(){
       icons: {
         primary: "ui-icon-disk"
       }
-    })
+    })		
 	
+    jQuery( "#gdwpm_tombol_opsi_dummy" )
+      .button({
+      icons: {
+        primary: "ui-icon-disk"
+      }
+    })
+		
   });
 </script>
 <?php
@@ -818,21 +929,31 @@ function gdwpm_tombol_opsi_override_eksen(){
 
 function gdwpm_ijin_masuk_perpus($jenis_berkas, $nama_berkas, $id_berkas, $deskrip_berkas, $gdwpm_lebar_gbr = '', $gdwpm_tinggi_gbr = ''){  
 	// ADD TO LIBRARY
-	$meta = array('aperture' => 0, 'credit' => '', 'camera' => '', 'caption' => $nama_berkas, 'created_timestamp' => 0, 'copyright' => '',  
-				'focal_length' => 0, 'iso' => 0, 'shutter_speed' => 0, 'title' => $nama_berkas); 
-	$attachment = array( 'post_mime_type' => $jenis_berkas, 'guid' => 'G_D_W_P_M-file_ID/'.$id_berkas,
-				'post_parent' => 0,	'post_title' => $nama_berkas, 'post_content' => $deskrip_berkas);
-	$attach_id = wp_insert_attachment( $attachment, 'G_D_W_P_M-file_ID/'.$id_berkas, 0 );
-
+	
+	$nama_folder = 'G_D_W_P_M-file_ID/' . $id_berkas;
+	
 	if(strpos($jenis_berkas, 'image') !== false){
 		$gdwpm_ukur_gambar    = getimagesize('https://docs.google.com/uc?id=' . $id_berkas. '&export=view');
 		$gdwpm_lebar_gbr  = $gdwpm_ukur_gambar[0];
 		$gdwpm_tinggi_gbr = $gdwpm_ukur_gambar[1];
+		
+		$gdwpm_dummy_fol = get_option('gdwpm_dummy_folder');
+		
+		if($gdwpm_dummy_fol == 'checked'){
+			$nama_folder = 'gdwpm_images/' . $id_berkas . '.jpg';
+		}
 		//$ukuran = array('thumbnail' => array('file' => 'G_D_W_P_M-file_ID/'.$id_berkas, 'width' => '150', 'height' => '150'));
 		//, 'size' => $ukuran
 	}
 	
-	$metadata = array("image_meta" => $meta, "width" => $gdwpm_lebar_gbr, "height" => $gdwpm_tinggi_gbr, 'file' => 'G_D_W_P_M-file_ID/'.$id_berkas, "gdwpm"=>TRUE); 
+	$meta = array('aperture' => 0, 'credit' => '', 'camera' => '', 'caption' => $nama_berkas, 'created_timestamp' => 0, 'copyright' => '',  
+				'focal_length' => 0, 'iso' => 0, 'shutter_speed' => 0, 'title' => $nama_berkas); 
+	$attachment = array( 'post_mime_type' => $jenis_berkas, 'guid' => $nama_folder,
+				'post_parent' => 0,	'post_title' => $nama_berkas, 'post_content' => $deskrip_berkas);
+	$attach_id = wp_insert_attachment( $attachment, $nama_folder, 0 );
+
+	
+	$metadata = array("image_meta" => $meta, "width" => $gdwpm_lebar_gbr, "height" => $gdwpm_tinggi_gbr, 'file' => $nama_folder, "gdwpm"=>TRUE); 
     wp_update_attachment_metadata( $attach_id,  $metadata);	
 }
 
@@ -880,6 +1001,15 @@ function gdwpm_action_callback() {
 				update_option('gdwpm_override_dir_bawaan', $gdwpm_cekbok);	
 				echo 'Option saved.';
 			}
+		}
+	}elseif(isset($_POST['gdwpm_cekbok_opsi_dummy'])){
+		$nonce = $_REQUEST['gdwpm_override_nonce'];
+		
+		if ( ! wp_verify_nonce( $nonce, 'gdwpm_override_dir' ) ) {
+			die('<strong>Oops... failed!</strong>'); 
+		} else {			
+				update_option('gdwpm_dummy_folder', $_POST['gdwpm_cekbok_opsi_dummy']);	
+				echo 'Option saved.';
 		}
 	}elseif(isset($_REQUEST['gdwpm_tabulasi'])){
 		if($_REQUEST['gdwpm_tabulasi'] == 'apidoku'){
@@ -1114,6 +1244,7 @@ class GDWPMBantuan {
 				if ($pageToken) {
 					$parameters['pageToken'] = $pageToken;
 				}
+				$parameters['maxResults'] = 1000;
 				$children = $this->_service->children->listChildren($folderId, $parameters);
 				$daftarfile =  '<div id="hasil"><table id="box-table-a" summary="File Folder"><thead><tr><th scope="col"><span class="ui-icon ui-icon-check"></span></th><th scope="col">File ID</th><th scope="col">Title</th><!--<th scope="col">Description</th>--><th scope="col">Shared</th><th scope="col">Action</th></tr></thead>';
 				$i = 0;
@@ -1137,6 +1268,35 @@ class GDWPMBantuan {
 			return array($daftarfile, $i);
 		}
 }
+
+function gdwpm_activate() {
+$tulis_htacc = <<<HTAC
+RewriteEngine on
+RewriteBase /
+RewriteRule ^(.*)/?.jpg$ wp-content/uploads/gdwpm_images/index.php?imgid=$1 [L]
+HTAC;
+$tulis_php = <<<PHPG
+<?php
+ header("Content-Type: image/jpg");
+	if (isset(\$_GET['imgid'])){
+		\$gdid = \$_GET['imgid'];
+		\$gdurl = "https://docs.google.com/uc?id=\$gdid&export=view";
+		readfile(\$gdurl);
+	}else{
+	//
+	}
+?>
+PHPG;
+	$upload_dir = wp_upload_dir();
+	$nama_ploder = 'gdwpm_images';
+	$fulldir = $upload_dir['basedir'] . '/' . $nama_ploder;
+	if(!is_dir($fulldir)){
+		wp_mkdir_p($fulldir);
+		file_put_contents($fulldir . '/index.php', $tulis_php, LOCK_EX);
+		file_put_contents($fulldir . '/.htaccess', $tulis_htacc, LOCK_EX);
+	}
+}
+register_activation_hook( __FILE__, 'gdwpm_activate' );
 
 function gdwpm_cek_versi(){
 	$gdwpm_svn_tags = @file_get_contents('http://plugins.svn.wordpress.org/google-drive-wp-media/tags/');
