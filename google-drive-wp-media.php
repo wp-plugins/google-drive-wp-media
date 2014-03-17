@@ -328,7 +328,7 @@ if($cek_kunci == 'false'){ ?>
  <?php if (!empty($foldercek)) { ?>
 			<li><a href="#tabs-1"><span style="float:left" class="ui-icon ui-icon-script"></span>&nbsp;File & Folder List</a></li>
 			<li><a href="#tabs-2"><span style="float:left" class="ui-icon ui-icon-star"></span>&nbsp;Upload</a></li>
-			<li><a href="#tabs-3"><span style="float:left" class="ui-icon ui-icon-clipboard"></span>&nbsp;Option</a></li>
+			<li><a href="#tabs-3"><span style="float:left" class="ui-icon ui-icon-clipboard"></span>&nbsp;Options</a></li>
 			<li><a href="#tabs-4"><span style="float:left" class="ui-icon ui-icon-heart"></span>&nbsp;Account Information</a></li>
 <?php }else{ ?>
 			<li><a href="#tabs-5"><span style="float:left" class="ui-icon ui-icon-folder-collapsed"></span>&nbsp;Create Folder</a></li>
