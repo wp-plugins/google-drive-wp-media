@@ -4,7 +4,7 @@ Donate link: http://www.mochamir.com/
 Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
 Requires at least: 3.1
 Tested up to: 3.8.1
-Stable tag: 1.3
+Stable tag: 1.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,7 @@ Features:
 * 700kb chunked for handle uploading large files.
 * Displaying current storage space.
 * Create WordPress image galleries.
+* Dummy internal urls.
 
 Required:
 
@@ -44,12 +45,17 @@ Required:
 The error reported that was 'Unable to parse the p12 file', have you write the correct url path of p12 file.? can you access or download it via web browser? in addition if your domain setting use non-www or www only, then you have to add/remove www in url path.
 
 = I got a problem and the message is "An error occurred: Error refreshing the OAuth2 token, message: '{ "error" : "invalid_grant" }'". what I missed? =
-There's something wrong (typo or something) w/ your Service Account Name setting. Please make sure, there's no white space in the form fields. especially Service Account Name field.
+There's something wrong (typo or something) w/ your Service Account Name setting. Please make sure, there's no white space in the form fields. especially Service Account Name field or create New Client ID.
 
 = How to insert zip file into post as a Google Drive link, not linked to attachment page? =
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 1.4 =
+
+* Url Rewrite bug fixed and optimized
+* Added CSS files
 
 = 1.3 =
 
