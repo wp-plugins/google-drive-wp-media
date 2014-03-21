@@ -94,7 +94,7 @@ add_action( 'admin_init', 'gdwpm_admin_init' );
 function gdwpm_admin_init() {
 	$gdwpm_theme_css_pilian = get_option('gdwpm_nama_theme_css');
 	if(empty($gdwpm_theme_css_pilian)){$gdwpm_theme_css_pilian = 'smoothness';}
-    wp_register_style( 'gdwpm-jqueryui-theme', plugins_url( '/css/' . $gdwpm_theme_css_pilian . '.css', __FILE__ ), false, VERSI_GDWPM );
+    wp_register_style( 'gdwpm-jqueryui-theme', '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/' . $gdwpm_theme_css_pilian . '/jquery-ui.css', false, VERSI_GDWPM );
 }
 	
 //////////////// HALAMAN MEDIA MENU ///////////////
