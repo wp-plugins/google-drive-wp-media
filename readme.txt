@@ -2,9 +2,9 @@
 Contributors: moch-a
 Donate link: http://www.mochamir.com/
 Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
-Requires at least: 3.1
+Requires at least: 3.5
 Tested up to: 3.8.1
-Stable tag: 1.4
+Stable tag: 1.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -12,7 +12,7 @@ WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publi
 
 == Description ==
 
-Google Drive on Wordpress Media Publishing. Direct access to your Google Drive, allow you to manage your files remotely from your WordPress blog.
+Google Drive on Wordpress Media Publishing. Direct access to your Google Drive, allows you to manage your files remotely from your WordPress blog.
 Upload and share your files directly from your WordPress blog to Google Drive.
 
 Features:
@@ -26,6 +26,10 @@ Features:
 * Displaying current storage space.
 * Create WordPress image galleries.
 * Dummy internal urls.
+* Delete Google Drive file and folder
+* Media Library categories
+* Auto create category
+* Filtering files in Add Media tab
 
 Required:
 
@@ -51,6 +55,11 @@ There's something wrong (typo or something) w/ your Service Account Name setting
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 1.5 =
+
+* Feature to delete files/folder added
+* Media Library categories added
 
 = 1.4 =
 

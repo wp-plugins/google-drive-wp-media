@@ -5,10 +5,29 @@ if(!function_exists('is_admin')){
 if ( !is_admin() ) {
      wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 }
+$gdwpm_opsi_kategori = get_option('gdwpm_opsi_kategori_dr_folder'); 
+$gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 ?>
+				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
+				<form id="gdwpm_form_opsi_kategori" name="gdwpm_form_opsi_kategori" method="post">
+				<p>
+					<a onclick="gdwpm_cekbok_opsi_kategori_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_kategori' name='gdwpm_cekbok_opsi_kategori' value='1' <?php echo $gdwpm_opsi_kategori;?> /></a> 
+					Enable GDWPM Categories. (Google Drive folder names as Media Library category names)<br />
+					&nbsp;<dfn>This option will create GDWPM Categories in your Media Library & Add Media filtering files.</dfn>
+					<input type="hidden" name="gdwpm_opsi_kategori_nonce" value="<?php echo $gdwpm_override_nonce;?>">
+				<p>
+				<div id="gdwpm_folder_opsi_kategori_eksen" style="margin-left:15px;display: <?php if ($gdwpm_opsi_kategori == 'checked') { echo 'block;';}else{echo 'none;';}?>">
+					<p>
+					<dfn>Every time any Google Drive files added to Media Library, the folder name of these files will be category name of GDWPM Categories in the Media Library.
+					</dfn>
+					</p>
+				</div>
+				<button id="gdwpm_tombol_opsi_kategori" name="gdwpm_tombol_opsi_kategori">Save & Reload</button>
+				</form>
+				</div>
+				<br />
 				<?php 
 				$gdwpm_override = get_option('gdwpm_override_dir_bawaan'); // cekbok, polder
-				$gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 				?>
 				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
 				<p>
@@ -33,6 +52,14 @@ if ( !is_admin() ) {
 				<span id="gdwpm__cekbok_opsi_override_info"></span>
 				</div>
 <script type="text/javascript">	
+function gdwpm_cekbok_opsi_kategori_eksen(){
+	if (jQuery('#gdwpm_cekbok_opsi_kategori').prop('checked')){
+		document.getElementById("gdwpm_folder_opsi_kategori_eksen").style.display = "block";
+	}else{
+		document.getElementById("gdwpm_folder_opsi_kategori_eksen").style.display = "none";
+	}
+}
+
 function gdwpm_cekbok_opsi_override_eksen(){
 	if (jQuery('#gdwpm_cekbok_opsi_override').prop('checked')){
 		document.getElementById("gdwpm_folder_opsi_override_eksen").style.display = "block";
@@ -180,6 +207,13 @@ function gdwpm_tombol_opsi_dummy_eksen(){
 		});
 }
   jQuery(function() {
+    jQuery( "#gdwpm_tombol_opsi_kategori" )
+      .button({
+      icons: {
+        primary: "ui-icon-disk"
+      }
+    });	
+	
     jQuery( "#gdwpm_tombol_opsi_override" )
       .button({
       icons: {

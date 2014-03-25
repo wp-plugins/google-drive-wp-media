@@ -44,6 +44,39 @@ $('#hasil').html($('#hasil', $holder).html());
 	
 	});
 	
+	 $("#gdwpm_file_dr_folder").click(function(){
+        $("#gdwpm_loading_gbr_del").show();
+	$('.sukses_del').empty();
+	$('.sukses_del').hide();
+	$('#hasil_del').empty();
+	$('#gdwpm_info_del').hide();
+	$('#hasil_del').hide();
+	var data = {
+		action: 'gdwpm_on_action',
+		folder_pilian_file_del: $('select[name=folder_pilian_file_del]').val()
+	};
+	
+	jQuery.post(ajax_object.ajax_url, data, function(responsedel) {
+		$("#gdwpm_loading_gbr_del").hide();
+		$('#hasil_del').show();
+		var holder = $('<div/>').html(responsedel);
+$('.sukses_del').html($('.sukses_del', holder).html());
+$('#hasil_del').html($('#hasil_del', holder).html());
+	$('.sukses_del').show();
+		
+	});
+    }); 
+	
+	
+	 $("#hasil_del").click(function(){
+    var len = $("#hasil_del input[name='gdwpm_buang_berkas_terpilih[]']:checked").length;
+	if (len>0){
+		$('#gdwpm_info_del').show();
+	}else{
+		$('#gdwpm_info_del').hide();
+	}
+    }); 
+	
 	$("#gdwpm_aplot_masuk").click(function(){
 //function uploadfile(){
 	alert('Got this from the server: ');
@@ -61,5 +94,60 @@ $('#hasil').html($('#hasil', $holder).html());
 	
 
 })
+
+if(ajax_object.opsi_kategori == 'checked') {
+	var gdwpmMedia = wp.media;
+	if ( gdwpmMedia ) {
+		jQuery.each(mediaTaxonomies,function(key,label){
+
+			gdwpmMedia.view.AttachmentFilters[key] = gdwpmMedia.view.AttachmentFilters.extend({
+				className: key,
+
+				createFilters: function() {
+					var filters = {};
+
+					_.each( mediaTerms[key] || {}, function( term ) {
+
+						var query = {};
+
+						query[key] = {
+							taxonomy: key,
+							term_id: parseInt( term.id, 10 ),
+							term_slug: term.slug
+						};
+
+						filters[ term.slug ] = {
+							text: term.label,
+							props: query
+						};
+					});
+
+					this.filters = filters;
+				}
+
+
+			});
+
+			var gdwpmBar = gdwpmMedia.view.AttachmentsBrowser;
+
+			gdwpmMedia.view.AttachmentsBrowser = gdwpmMedia.view.AttachmentsBrowser.extend({
+				createToolbar: function() {
+
+					gdwpmMedia.model.Query.defaultArgs.filterSource = 'filter-media-taxonomies';
+
+					gdwpmBar.prototype.createToolbar.apply(this,arguments);
+
+					this.toolbar.set( key, new gdwpmMedia.view.AttachmentFilters[key]({
+						controller: this.controller,
+						model:      this.collection.props,
+						priority:   -80
+						}).render()
+					);
+				}
+			});
+
+		});
+	}
+}
 
  });
