@@ -140,3 +140,4 @@ None
 2. Files & Folder List
 3. Media Menu
 4. Media Library Attachment
+5. Media Library Categories
