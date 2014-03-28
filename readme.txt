@@ -28,8 +28,8 @@ Features:
 * Dummy internal urls.
 * Delete Google Drive file and folder
 * Media Library categories
-* Auto create category
-* Filtering files in Add Media tab
+* Auto create category based on Google Drive name
+* Filtering files by its categories in Add Media upload tab
 
 Required:
 
@@ -129,9 +129,11 @@ Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link
 * Error create folder missing argument fixed
 
 = 0.1 =
+
 * Initial release, it's a beta version.
 
 == Upgrade Notice ==
+
 None
 
 == Screenshots ==
