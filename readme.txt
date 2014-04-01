@@ -45,6 +45,9 @@ Required:
 
 == Frequently Asked Questions ==
 
+= How to displaying images in thumbnail size in the gallery? =
+Click the "Options" tab and check the "Enable Dummy Image URL".
+
 = I got a problem and the message is "An error occurred: Unable to parse the p12 file. Is this a .p12 file? Is the password correct? OpenSSL error:". what I missed? =
 The error reported that was 'Unable to parse the p12 file', have you write the correct url path of p12 file.? can you access or download it via web browser? in addition if your domain setting use non-www or www only, then you have to add/remove www in url path.
 
