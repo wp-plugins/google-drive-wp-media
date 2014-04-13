@@ -28,7 +28,7 @@ Features:
 * Dummy internal urls.
 * Delete Google Drive file and folder
 * Media Library categories
-* Auto create category based on Google Drive name
+* Auto create Media Library category based on Google Drive folder name
 * Filtering files by its categories in Add Media upload tab
 
 Required:
