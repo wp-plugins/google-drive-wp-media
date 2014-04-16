@@ -45,6 +45,9 @@ Required:
 
 == Frequently Asked Questions ==
 
+= Can you tell me why I can't see the files or folders in my google drive that supposedly are uploading to my drive? =
+All uploaded files will listed in "Shared with Me" view https://drive.google.com/?authuser=0#shared-with-me
+
 = How to displaying images in thumbnail size in the gallery? =
 Click the "Options" tab and check the "Enable Dummy Image URL".
 
