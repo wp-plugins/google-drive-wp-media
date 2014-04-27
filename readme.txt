@@ -3,8 +3,8 @@ Contributors: moch-a
 Donate link: http://www.mochamir.com/
 Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
 Requires at least: 3.5
-Tested up to: 3.8.1
-Stable tag: 1.5
+Tested up to: 3.9
+Stable tag: 1.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,8 +28,8 @@ Features:
 * Dummy internal urls.
 * Delete Google Drive file and folder
 * Media Library categories
-* Auto create category
-* Filtering files in Add Media tab
+* Auto create Media Library category based on Google Drive folder name
+* Filtering files by its categories in Add Media upload tab
 
 Required:
 
@@ -45,6 +45,12 @@ Required:
 
 == Frequently Asked Questions ==
 
+= Can you tell me why I can't see the files or folders in my google drive that supposedly are uploading to my drive? =
+All uploaded files will listed in "Shared with Me" view https://drive.google.com/?authuser=0#shared-with-me
+
+= How to displaying images in thumbnail size in the gallery? =
+Click the "Options" tab and check the "Enable Dummy Image URL".
+
 = I got a problem and the message is "An error occurred: Unable to parse the p12 file. Is this a .p12 file? Is the password correct? OpenSSL error:". what I missed? =
 The error reported that was 'Unable to parse the p12 file', have you write the correct url path of p12 file.? can you access or download it via web browser? in addition if your domain setting use non-www or www only, then you have to add/remove www in url path.
 
@@ -55,6 +61,11 @@ There's something wrong (typo or something) w/ your Service Account Name setting
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 1.6 =
+
+* Enable preview in file list
+* Compatible up to Version 3.9
 
 = 1.5 =
 
@@ -129,9 +140,11 @@ Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link
 * Error create folder missing argument fixed
 
 = 0.1 =
+
 * Initial release, it's a beta version.
 
 == Upgrade Notice ==
+
 None
 
 == Screenshots ==
@@ -140,3 +153,4 @@ None
 2. Files & Folder List
 3. Media Menu
 4. Media Library Attachment
+5. Media Library Categories

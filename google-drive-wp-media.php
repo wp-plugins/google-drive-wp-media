@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 1.5
+Version: 1.6
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '1.5' );
+define( 'VERSI_GDWPM', '1.6' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -509,9 +509,12 @@ if($cek_kunci == 'false'){ ?>
 						<a href=""><button id="gdwpm_tombol_info_folder_baru" name="gdwpm_tombol_info_folder_baru"><?php _e('Reload Now') ?></button></a>
 					</span>
 				</p>
+				<?php add_thickbox();?>
 				<p>
 					<span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br /><br />
 						Link URL of your file: https://docs.google.com/uc?id=<b>YOUR-FILE-ID-HERE</b>&export=view 
+						<br />
+						Preview: https://docs.google.com/file/d/<b>YOUR-FILE-ID-HERE</b>/preview
 						<br />
 						Google Docs Viewer: https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<b>YOUR-FILE-ID-HERE</b>%26export%3Dview
 						<?php
@@ -543,10 +546,9 @@ if($cek_kunci == 'false'){ ?>
 					<!--<p>Short Description: <input type="text" name="gdwpm_aplod_deskrip" value="" size="65" placeholder="Optional"></p>-->
 				<p>
 					<ul>
-						<!--<li>Your hosting maximum upload size allowed: <?php //$size_allowed = wp_max_upload_size(); echo $size_allowed / 1048576 ;?>MB. 
-							<br />&nbsp;<dfn>It should be okay if your files more than maximum allowed size, since this plugin handle upload with chunks (700kb/chunk).</dfn>
-						--></li>
-						<li>Accepted Media MIME types: */*
+						<li><dfn>Your Uploaded files will be listed in "Shared with Me" view (<a href="https://drive.google.com/?authuser=0#shared-with-me" target="_blank">https://drive.google.com/?authuser=0#shared-with-me</a>).
+						</dfn></li>
+						<li><dfn>Accepted Media MIME types: */*</dfn>
 						<!--	<br />&nbsp;<dfn>All Filetypes are allowed.</dfn>
 						--></li>
 					</ul> 
@@ -1426,7 +1428,7 @@ class GDWPMBantuan {
 					$daftarfile .=  '<td title="' . $file->description . '"><img src="' . $file->iconLink . '" title="' . $file->mimeType . '"> ' . $file->title . '</td>';
 					$daftarfile .=  '<!--<td>' . $file->description . '</td>-->';
 					$daftarfile .=  '<td title="md5Checksum : ' . $file->md5Checksum . '">' . str_replace('1', 'Yes', $file->shared) . '</td>';
-					$daftarfile .=  '<td>' . $view . '</td></tr>';
+					$daftarfile .=  '<td>' . $view . ' | <a href="https://docs.google.com/file/d/'.$fileId.'/preview?TB_iframe=true&width=600&height=550" title="'.$file->title.' ('.$fileId.')" class="thickbox">Preview</a></td></tr>';
 				}
 				$pageToken = $children->getNextPageToken();
 			} while ($pageToken);
