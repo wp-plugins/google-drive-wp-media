@@ -3,8 +3,8 @@ Contributors: moch-a
 Donate link: http://www.mochamir.com/
 Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
 Requires at least: 3.5
-Tested up to: 3.9
-Stable tag: 1.6
+Tested up to: 3.9.1
+Stable tag: 1.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -31,6 +31,8 @@ Features:
 * Auto create Media Library category based on Google Drive folder name
 * Filtering files by its categories in Add Media upload tab
 
+Shortcode for Single File Preview: **[gdwpm id="GOOGLE-DRIVE-FILE-ID"]**
+
 Required:
 
 * PHP 5.3.0
@@ -44,6 +46,19 @@ Required:
 1. Follow the instructions.
 
 == Frequently Asked Questions ==
+
+= How to save/insert/move (existing) files via the standard Google Drive interface (web, or local folder on computer) and have them show up in the Google Drive WP Media interface in WordPress? =
+1. login to https://drive.google.com/?authuser=0#shared-with-me.
+2. select folder that has been created by this plugin, click "Add to My Drive".
+3. Now the folder has been included into "My Drive" and you have an access to insert existing files into this folder.
+
+to insert or move existing files
+
+1. click "My Drive", and you will see your existing files/folders including folder from "Shared with Me" that you have been added before.
+2. select files (not folder) and then click "More" to show the dropdown menu, click "Move to".
+3. select folder from "Shared with Me" that you have been added before, click "Move"
+
+note: your files must be set to public to allows anyone to view or download your files.
 
 = Can you tell me why I can't see the files or folders in my google drive that supposedly are uploading to my drive? =
 All uploaded files will listed in "Shared with Me" view https://drive.google.com/?authuser=0#shared-with-me
@@ -61,6 +76,10 @@ There's something wrong (typo or something) w/ your Service Account Name setting
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 1.7 =
+
+* Added shortcode for single file preview
 
 = 1.6 =
 

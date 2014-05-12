@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 1.6
+Version: 1.7
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '1.6' );
+define( 'VERSI_GDWPM', '1.7' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -103,6 +103,12 @@ if(isset($_REQUEST['gdwpm_opsi_kategori_nonce'])){
 		}
 	}
 }
+
+// SHORTCODE  ===> [gdwpm id="GOOGLE-DRIVE-FILE-ID"]
+function gdwpm_iframe_shortcode($gdwpm_kode_berkas) {
+    return '<iframe src="https://docs.google.com/file/d/' . $gdwpm_kode_berkas['id'] . '/preview" width="640" height="385"></iframe>';	 
+}
+add_shortcode('gdwpm', 'gdwpm_iframe_shortcode'); 
 
 //////////// ADMIN INIT ///////////
 add_action( 'admin_init', 'gdwpm_admin_init' );
@@ -512,11 +518,13 @@ if($cek_kunci == 'false'){ ?>
 				<?php add_thickbox();?>
 				<p>
 					<span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br /><br />
-						Link URL of your file: https://docs.google.com/uc?id=<b>YOUR-FILE-ID-HERE</b>&export=view 
+						<dfn>*New</dfn> Shortcode: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>"]</code>
 						<br />
-						Preview: https://docs.google.com/file/d/<b>YOUR-FILE-ID-HERE</b>/preview
+						Link URL of your file: https://docs.google.com/uc?id=<strong>GOOGLE-DRIVE-FILE-ID</strong>&export=view 
 						<br />
-						Google Docs Viewer: https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<b>YOUR-FILE-ID-HERE</b>%26export%3Dview
+						Preview: https://docs.google.com/file/d/<strong>GOOGLE-DRIVE-FILE-ID</strong>/preview
+						<br />
+						Google Docs Viewer: https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<strong>GOOGLE-DRIVE-FILE-ID</strong>%26export%3Dview
 						<?php
 							$ebot = $gdwpm_service->getAbout();
 							echo '<br /><br />Storage Usage<br />Total quota: '.size_format($ebot->getQuotaBytesTotal(), 2).'<br />
