@@ -63,8 +63,26 @@ class Google_P12Signer extends Google_Signer {
         "PHP 5.3.0 or higher is required to use service accounts.");
     }
     if (!openssl_sign($data, $signature, $this->privateKey, "sha256")) {
-      throw new Google_AuthException("Unable to sign data");
+		if (!$this->my_openssl_sign($data, $signature, $this->privateKey, "sha256")) {
+		  throw new Google_AuthException("Unable to sign data");
+		}
     }
     return $signature;
+  }
+  
+  /* thanks to the unnamed friend of Niels Castle for this magic hack
+   * src = http://stackoverflow.com/questions/10524198/what-version-of-openssl-is-needed-to-sign-with-sha256withrsaencryption
+   *  */
+  function my_openssl_sign($data, &$signature, $priv_key_id, $signature_alg = 'sha256WithRSAEncryption') {
+    $pinfo = openssl_pkey_get_details($priv_key_id);
+    $hash = hash('sha256', $data);
+    $t = '3031300d060960864801650304020105000420'; # sha256
+    $t .= $hash;
+    $pslen = $pinfo['bits']/8 - (strlen($t)/2 + 3);
+ 
+    $eb = '0001' . str_repeat('FF', $pslen) . '00' . $t;
+    $eb = pack('H*', $eb);
+ 
+    return openssl_private_encrypt($eb, $signature, $priv_key_id, OPENSSL_NO_PADDING); 
   }
 }

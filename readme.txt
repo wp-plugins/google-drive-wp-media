@@ -3,8 +3,8 @@ Contributors: moch-a
 Donate link: http://www.mochamir.com/
 Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
 Requires at least: 3.5
-Tested up to: 3.9.1
-Stable tag: 1.7
+Tested up to: 4.0
+Stable tag: 1.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -76,6 +76,10 @@ There's something wrong (typo or something) w/ your Service Account Name setting
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 1.8 =
+
+* Alternative openssl sign function (as 2nd option) added
 
 = 1.7 =
 

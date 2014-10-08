@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 1.7
+Version: 1.8
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '1.7' );
+define( 'VERSI_GDWPM', '1.8' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -920,6 +920,7 @@ jQuery(function(){
 			<li>Loading images animation credit to mytreedb project.</li> 
 			<li>JQuery Upload credit to PLUpload by Moxiecode Systems AB.</li> 
 			<li>JQuery User Interface credit to JQueryUI.</li> 
+			<li>Alternative openssl sign function credit to Rochelle Alder.</li> 
 		</ul>
 		<p style="margin-top:57px;">
 			Donations and good ratings encourage me to further develop the plugin and to provide countless hours of support. <br />Any amount is appreciated! 
@@ -932,7 +933,7 @@ jQuery(function(){
 <div id="dialog-message" title="Warning" style="display: none;">
   <p>
     <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 50px 0;"></span>
-    It seems your api keys haven't properly saved yet. This plugin requires api key to authorize your drive.
+    This plugin requires api key to authorize your drive.
   </p>
   <p>
     Click the documentation tab for more info.
@@ -953,6 +954,8 @@ jQuery(function(){
     jQuery( "#gdwpm_pringatan_versi_php" ).dialog({
       autoOpen: <?php echo $gdwpm_cek_php;?>,
       modal: true,
+      width: 350,
+      resizable: false,
       buttons: {
         Ok: function() {
           jQuery( this ).dialog( "close" );
@@ -962,6 +965,8 @@ jQuery(function(){
     jQuery( "#dialog-message" ).dialog({
       autoOpen: <?php echo $cek_kunci;?>,
       modal: true,
+      width: 350,
+      resizable: false,
       buttons: {
         Ok: function() {
           jQuery( this ).dialog( "close" );
