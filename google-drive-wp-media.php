@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 1.8
+Version: 1.9
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '1.8' );
+define( 'VERSI_GDWPM', '1.9' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -440,6 +440,27 @@ jQuery(function() {
 {
 	background: #FFFFCF;
 	color: #339;
+}
+
+div.halpager {
+    text-align: center;
+    margin: 1em 0;
+}
+
+div.halpager span {
+    display: inline-block;
+    width: 1.8em;
+    height: 1.8em;
+    line-height: 1.8;
+    text-align: center;
+    cursor: pointer;
+    background: #EAFAFC;
+    color: #039;
+    margin-right: 0.5em;
+}
+
+div.halpager span.active {
+    background: #B6F0F6;
 }
 </style>
 <?php
@@ -1429,7 +1450,7 @@ class GDWPMBantuan {
 				}
 				$parameters['maxResults'] = 1000;
 				$children = $this->_service->children->listChildren($folderId, $parameters);
-				$daftarfile =  '<div id="'.$div_id.'"><table id="box-table-a" summary="File Folder"><thead><tr><th scope="col"><span class="ui-icon ui-icon-check"></span></th><th scope="col">File ID</th><th scope="col">Title</th><!--<th scope="col">Description</th>--><th scope="col">Shared</th><th scope="col">Action</th></tr></thead>';
+				$daftarfile =  '<div id="'.$div_id.'"><table id="box-table-a" summary="File Folder" class="paginasi"><thead><tr><th scope="col"><span class="ui-icon ui-icon-check"></span></th><th scope="col">File ID</th><th scope="col">Title</th><!--<th scope="col">Description</th>--><th scope="col">Shared</th><th scope="col">Action</th></tr></thead>';
 				$i = 0;
 				foreach ($children->getItems() as $child) {
 					$i++; if($i == 1 && $in_type == 'radio'){$checked = 'checked';}else{$checked = '';}
