@@ -253,7 +253,7 @@ function gdwpm_sekrip_buat_mimin() {
 	wp_enqueue_script('plupload-all');          
 	wp_enqueue_script('jquery-ui-tooltip');              
 	wp_enqueue_script('jquery-ui-tabs');        
-	wp_enqueue_script( 'gdwpm-ajax-script', plugins_url( '/js/sekrip.js', __FILE__ ), array('jquery'), array(), VERSI_GDWPM, true );	
+	wp_enqueue_script( 'gdwpm-ajax-script', plugins_url( '/js/sekrip.js?v=20', __FILE__ ), array('jquery'), array(), VERSI_GDWPM, true );	
 		
 $gdwpm_opsi_kategori = get_option('gdwpm_opsi_kategori_dr_folder'); 
 	wp_localize_script( 'gdwpm-ajax-script', 'ajax_object',
