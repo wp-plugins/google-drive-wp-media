@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 1.9
+Version: 2.0
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '1.9' );
+define( 'VERSI_GDWPM', '2.0' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -104,9 +104,10 @@ if(isset($_REQUEST['gdwpm_opsi_kategori_nonce'])){
 	}
 }
 
-// SHORTCODE  ===> [gdwpm id="GOOGLE-DRIVE-FILE-ID"]
+// SHORTCODE  ===> [gdwpm id="GOOGLE-DRIVE-FILE-ID" w="640" h="385"]
 function gdwpm_iframe_shortcode($gdwpm_kode_berkas) {
-    return '<iframe src="https://docs.google.com/file/d/' . $gdwpm_kode_berkas['id'] . '/preview" width="640" height="385"></iframe>';	 
+	$gdwpm_kode_berkas = shortcode_atts( array( 'id' => '', 'w' => '640', 'h' => '385'), $gdwpm_kode_berkas, 'gdwpm' );
+    return '<iframe src="https://docs.google.com/file/d/' . $gdwpm_kode_berkas['id'] . '/preview" width="' . $gdwpm_kode_berkas['w'] . '" height="' . $gdwpm_kode_berkas['h'] . '"></iframe>';	 
 }
 add_shortcode('gdwpm', 'gdwpm_iframe_shortcode'); 
 
@@ -530,6 +531,13 @@ if($cek_kunci == 'false'){ ?>
 		</ul>
  <?php if (!empty($foldercek)) { ?>
 			<div id="tabs-1">
+				<div id="tombol-donat" class="ui-widget-content ui-corner-all" style="width:200px; float:right; padding:1em;">	
+					<p>If you like this plugin and you feel that this plugin is useful, help keep this plugin free by clicking the donate button. Your donations help keep the plugin updated, maintained and the development motivated. :)
+					</p>
+					<p style="text-align: center;"><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZZNNMX3NZM2G2" target="_blank">
+					<img src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" alt="Donate Button with Credit Cards" /></a>
+					</p>						
+				</div>
 				<p>Select folder: <?php echo $folderpil; ?> <button id="golek_seko_folder" name="golek_seko_folder"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
 					<span id="gdwpm_info_folder_baru" style="display:none;">
 						You have created at least one folder.
@@ -539,7 +547,9 @@ if($cek_kunci == 'false'){ ?>
 				<?php add_thickbox();?>
 				<p>
 					<span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br /><br />
-						<dfn>*New</dfn> Shortcode: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>"]</code>
+						Shortcode: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>"]</code>
+						<br />
+						Shortcode with specific width & height: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>" w="<strong>640</strong>" h="<strong>385</strong>"]</code>
 						<br />
 						Link URL of your file: https://docs.google.com/uc?id=<strong>GOOGLE-DRIVE-FILE-ID</strong>&export=view 
 						<br />
@@ -933,16 +943,16 @@ jQuery(function(){
 		</p>
 		<p>
 			Credits:
+			<ul>
+				<li>Google Drive API & products are owned by Google inc.</li> 
+				<li>Table Style credit to R. Christie (SmashingMagazine).</li> 
+				<li>DriveServiceHelper Class credit to Lukasz Kujawa.</li> 
+				<li>Loading images animation credit to mytreedb project.</li> 
+				<li>JQuery Upload credit to PLUpload by Moxiecode Systems AB.</li> 
+				<li>JQuery User Interface credit to JQueryUI.</li> 
+				<li>Alternative openssl sign function credit to Rochelle Alder.</li> 
+			</ul>
 		</p>
-		<ul>
-			<li>Google Drive API & products are owned by Google inc.</li> 
-			<li>Table Style credit to R. Christie (SmashingMagazine).</li> 
-			<li>DriveServiceHelper Class credit to Lukasz Kujawa.</li> 
-			<li>Loading images animation credit to mytreedb project.</li> 
-			<li>JQuery Upload credit to PLUpload by Moxiecode Systems AB.</li> 
-			<li>JQuery User Interface credit to JQueryUI.</li> 
-			<li>Alternative openssl sign function credit to Rochelle Alder.</li> 
-		</ul>
 		<p style="margin-top:57px;">
 			Donations and good ratings encourage me to further develop the plugin and to provide countless hours of support. <br />Any amount is appreciated! 
 		</p>
@@ -971,6 +981,12 @@ jQuery(function(){
   </p>
 </div>
 <script>
+   function gantiBaris() {
+    var selectBox = document.getElementById("pilihBaris");
+    var jumlahBaris = selectBox.options[selectBox.selectedIndex].value;
+    jumBaris(jumlahBaris);
+   }
+
   jQuery(function() {
     jQuery( "#gdwpm_pringatan_versi_php" ).dialog({
       autoOpen: <?php echo $gdwpm_cek_php;?>,
@@ -1130,7 +1146,8 @@ function gdwpm_action_callback() {
 		if($i <= 0){
 			$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
 		}
-		echo '<div class="sukses"><p>Your current Folder ID is <strong>'.$fld.'</strong> and <strong>'.$i.' files</strong> detected in this folder.</p></div>';
+		
+		echo '<div class="sukses"><p>Your current Folder ID is <strong>'.$fld.'</strong> and <strong>'.$i.' files</strong> detected in this folder.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/page</option><option value="10" selected="selected">10 rows/page</option>   <option value="15">15 rows/page</option><option value="20">20 rows/page</option><option value="25">25 rows/page</option><option value="30">30 rows/page</option></select></p></div>';
 			
 		echo $daftarfile;
 		
@@ -1365,6 +1382,19 @@ class GDWPMBantuan {
                 return $this->_service->$name;
         }
         
+		private function formatBytes($fileId, $precision = 2)
+		{
+			$file_siap = $this->_service->files->get($fileId);
+			$file_ukuran = $file_siap->fileSize;
+			if($file_ukuran > 0){
+				$base = log($file_ukuran, 1024);
+				$suffixes = array('', ' KB', ' MB', ' GB', ' TB');   
+				return round(pow(1024, $base - floor($base)), $precision) . $suffixes[floor($base)];
+			}else{
+				return $file_ukuran;
+			}
+		}
+
         public function getAbout( ) {
                 return $this->_service->about->get();
         }
@@ -1450,7 +1480,7 @@ class GDWPMBantuan {
 				}
 				$parameters['maxResults'] = 1000;
 				$children = $this->_service->children->listChildren($folderId, $parameters);
-				$daftarfile =  '<div id="'.$div_id.'"><table id="box-table-a" summary="File Folder" class="paginasi"><thead><tr><th scope="col"><span class="ui-icon ui-icon-check"></span></th><th scope="col">File ID</th><th scope="col">Title</th><!--<th scope="col">Description</th>--><th scope="col">Shared</th><th scope="col">Action</th></tr></thead>';
+				$daftarfile =  '<div id="'.$div_id.'"><table id="box-table-a" summary="File Folder" class="paginasi"><thead><tr><th scope="col"><span class="ui-icon ui-icon-check"></span></th><th scope="col">File ID</th><th scope="col">Title</th><!--<th scope="col">Description</th>--><th scope="col">Size</th><th scope="col">Action</th></tr></thead>';
 				$i = 0;
 				foreach ($children->getItems() as $child) {
 					$i++; if($i == 1 && $in_type == 'radio'){$checked = 'checked';}else{$checked = '';}
@@ -1461,7 +1491,7 @@ class GDWPMBantuan {
 					$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.$file->mimeType.' | '.$file->title.' | '.$fileId.' | '.$file->description.' | '.$folder_name.'" ' . $checked . '></td><td>'.$fileId.'</td>';
 					$daftarfile .=  '<td title="' . $file->description . '"><img src="' . $file->iconLink . '" title="' . $file->mimeType . '"> ' . $file->title . '</td>';
 					$daftarfile .=  '<!--<td>' . $file->description . '</td>-->';
-					$daftarfile .=  '<td title="md5Checksum : ' . $file->md5Checksum . '">' . str_replace('1', 'Yes', $file->shared) . '</td>';
+					$daftarfile .=  '<td title="md5Checksum : ' . $file->md5Checksum . '">' . $this->formatBytes($fileId) . '</td>';
 					$daftarfile .=  '<td>' . $view . ' | <a href="https://docs.google.com/file/d/'.$fileId.'/preview?TB_iframe=true&width=600&height=550" title="'.$file->title.' ('.$fileId.')" class="thickbox">Preview</a></td></tr>';
 				}
 				$pageToken = $children->getNextPageToken();
@@ -1471,6 +1501,14 @@ class GDWPMBantuan {
 		
 			return array($daftarfile, $i);
 		}
+}
+
+function formatBytes($size, $precision = 2)
+{
+    $base = log($size, 1024);
+    $suffixes = array('', ' KB', ' MB', ' GB', ' TB');   
+
+    return round(pow(1024, $base - floor($base)), $precision) . $suffixes[floor($base)];
 }
 
 function gdwpm_activate() {

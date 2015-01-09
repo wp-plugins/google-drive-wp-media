@@ -1,3 +1,34 @@
+function jumBaris(maxBaris){
+
+jQuery('table.paginasi').each(function() {
+    var halSkrg = 0;
+  if (typeof maxBaris === 'undefined') { maxBaris = 20; }
+    var table = jQuery(this);
+    table.bind('repaginate', function() {
+        table.find('tbody tr').hide().slice(halSkrg * maxBaris, (halSkrg + 1) * maxBaris).show();
+    });
+    table.trigger('repaginate');
+    var jmlBaris = table.find('tbody tr').length;
+    var jmlLaman = Math.ceil(jmlBaris / maxBaris);
+	if (jQuery('.halpager').length) {
+		jQuery('.halpager').remove();
+	}
+	if (jmlLaman > 1){
+		var halPager = jQuery('<div class="halpager"></div>');
+		for (var hal = 0; hal < jmlLaman; hal++) {
+			jQuery('<span class="urut-laman"></span>').text(hal + 1).bind('click', {
+				halBaru: hal
+			}, function(event) {
+				halSkrg = event.data['halBaru'];
+				table.trigger('repaginate');
+				jQuery(this).addClass('active').siblings().removeClass('active');
+			}).appendTo(halPager).addClass('clickable');
+		}
+		halPager.insertAfter(table).find('span.urut-laman:first').addClass('active');
+	}
+});
+}
+
 jQuery(document).ready(function($) {
 	$('#gdwpm_loading_gbr').hide();
 	$('#gdwpm_masuk_perpus_teks').hide();
@@ -6,6 +37,7 @@ jQuery(document).ready(function($) {
         $("#gdwpm_loading_gbr").show();
 	$('.sukses').empty();
 	$('.sukses').hide();
+	$('#tombol-donat').remove();
 	$('.updated').hide();
 		$('#hasil').empty();
 	$('#gdwpm_masuk_perpus_teks').hide();
@@ -27,31 +59,8 @@ $('.sukses').html($('.sukses', $holder).html());
 $('#hasil').html($('#hasil', $holder).html());
 	$('.sukses').show();
 	$('#gdwpm_add_to_media_gbr').hide();
-		
-jQuery('table.paginasi').each(function() {
-    var halSkrg = 0;
-    var maxBaris = 20;
-    var table = jQuery(this);
-    table.bind('repaginate', function() {
-        table.find('tbody tr').hide().slice(halSkrg * maxBaris, (halSkrg + 1) * maxBaris).show();
-    });
-    table.trigger('repaginate');
-    var jmlBaris = table.find('tbody tr').length;
-    var jmlLaman = Math.ceil(jmlBaris / maxBaris);
-	if (jmlLaman > 1){
-		var halPager = jQuery('<div class="halpager"></div>');
-		for (var hal = 0; hal < jmlLaman; hal++) {
-			jQuery('<span class="urut-laman"></span>').text(hal + 1).bind('click', {
-				halBaru: hal
-			}, function(event) {
-				halSkrg = event.data['halBaru'];
-				table.trigger('repaginate');
-				jQuery(this).addClass('active').siblings().removeClass('active');
-			}).appendTo(halPager).addClass('clickable');
-		}
-		halPager.insertAfter(table).find('span.urut-laman:first').addClass('active');
-	}
-});
+	var pilBaris = $('#pilihBaris').val();
+		jumBaris(pilBaris);
 	});
     }); 
 	$("#gdwpm_berkas_masuk_perpus").click(function(){

@@ -4,7 +4,7 @@ Donate link: http://www.mochamir.com/
 Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
 Requires at least: 3.5
 Tested up to: 4.1
-Stable tag: 1.9
+Stable tag: 2.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -76,6 +76,13 @@ There's something wrong (typo or something) w/ your Service Account Name setting
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 2.0 =
+
+* Pagination option view added
+* Shared coloumn replaced with File size
+* Updated Shortcode with Specific width & height
+* Donation button added
 
 = 1.9 =
 
