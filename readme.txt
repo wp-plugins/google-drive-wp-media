@@ -4,7 +4,7 @@ Donate link: http://www.mochamir.com/
 Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
 Requires at least: 3.5
 Tested up to: 4.1
-Stable tag: 2.0
+Stable tag: 2.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,7 @@ Upload and share your files directly from your WordPress blog to Google Drive.
 
 Features:
 
+* Shortcode button, insert shortcode to embed Google Drive file directly from your post editor.
 * Option to auto insert your Google Drive files into your WordPress Media Library.
 * Attach your Google Drive files to your posts.
 * Upload your files from your WordPress Administration to Google Drive.
@@ -76,6 +77,13 @@ There's something wrong (typo or something) w/ your Service Account Name setting
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 2.1 =
+
+* Shortcode button added
+* Predefined shortcode option added
+* Bugs/typo fixed
+* jQuery UI updated to the latest version (v1.11.2)
 
 = 2.0 =
 

@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.0
+Version: 2.1
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.0' );
+define( 'VERSI_GDWPM', '2.1' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -106,7 +106,8 @@ if(isset($_REQUEST['gdwpm_opsi_kategori_nonce'])){
 
 // SHORTCODE  ===> [gdwpm id="GOOGLE-DRIVE-FILE-ID" w="640" h="385"]
 function gdwpm_iframe_shortcode($gdwpm_kode_berkas) {
-	$gdwpm_kode_berkas = shortcode_atts( array( 'id' => '', 'w' => '640', 'h' => '385'), $gdwpm_kode_berkas, 'gdwpm' );
+	$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview'); 
+	$gdwpm_kode_berkas = shortcode_atts( array( 'id' => '', 'w' => $gdwpm_ukuran_preview[0], 'h' => $gdwpm_ukuran_preview[1]), $gdwpm_kode_berkas, 'gdwpm' );
     return '<iframe src="https://docs.google.com/file/d/' . $gdwpm_kode_berkas['id'] . '/preview" width="' . $gdwpm_kode_berkas['w'] . '" height="' . $gdwpm_kode_berkas['h'] . '"></iframe>';	 
 }
 add_shortcode('gdwpm', 'gdwpm_iframe_shortcode'); 
@@ -116,7 +117,7 @@ add_action( 'admin_init', 'gdwpm_admin_init' );
 function gdwpm_admin_init() {
 	$gdwpm_theme_css_pilian = get_option('gdwpm_nama_theme_css');
 	if(empty($gdwpm_theme_css_pilian)){$gdwpm_theme_css_pilian = 'smoothness';}
-    wp_register_style( 'gdwpm-jqueryui-theme', '//ajax.googleapis.com/ajax/libs/jqueryui/1.10.4/themes/' . $gdwpm_theme_css_pilian . '/jquery-ui.css', false, VERSI_GDWPM );
+    wp_register_style( 'gdwpm-jqueryui-theme', '//ajax.googleapis.com/ajax/libs/jqueryui/1.11.2/themes/' . $gdwpm_theme_css_pilian . '/jquery-ui.css', false, VERSI_GDWPM );
 }
 
 
@@ -174,17 +175,43 @@ $terms = get_terms( 'gdwpm_category', array(
 			$attachment_terms[ 'gdwpm_category' ][] = array( 'id' => 0, 'label' => 'View all GDWPM Categories', 'slug' => '' );
 			foreach ( $terms as $term )
 				$attachment_terms[ 'gdwpm_category' ][] = array( 'id' => $term->term_id, 'label' => $term->name, 'slug' => $term->slug );
-
+	if(!$gdwpm_ukuran_preview){$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');}
 		?>
 <style type="text/css">
 .wp-admin .media-toolbar-secondary select {
 	margin: 11px 16px 0 0;
 }
 </style>
-		<script type="text/javascript">
-			var mediaTaxonomies = <?php echo json_encode( $attachment_taxonomies ) ?>,
-				mediaTerms = <?php echo json_encode( $attachment_terms ) ?>;
-		</script>
+<script type="text/javascript">
+jQuery(function($) {
+    $(document).ready(function(){
+		$('#masukin-sotkode').click(open_media_window);
+    });
+ 
+    function open_media_window() {
+		if (this.window === undefined) {
+			this.window = wp.media({
+                title: 'Insert Google Drive Single File Preview',
+                multiple: false,
+                button: {text: 'Insert'}
+            });
+ 
+			var self = this;
+			this.window.on('select', function() {
+                var first = self.window.state().get('selection').first().toJSON();
+				if (first.url.indexOf("google.com") > 0 || first.url.indexOf("gdwpm_images") > 0){
+					wp.media.editor.insert('[gdwpm id="' + first.filename + '" w="<?php echo $gdwpm_ukuran_preview[0];?>" h="<?php echo $gdwpm_ukuran_preview[1];?>"]');
+				}
+            });
+		}
+ 
+		this.window.open();
+		return false;
+    }
+});
+var mediaTaxonomies = <?php echo json_encode( $attachment_taxonomies ) ?>,
+mediaTerms = <?php echo json_encode( $attachment_terms ) ?>;
+</script>
 <?php
 }
 function gdwpm_image_category_filter() {
@@ -411,6 +438,12 @@ jQuery(function() {
 });
 </script>
 <style type="text/css">
+a.tabeksen:link {
+    color: #3399FF	;
+}
+a.tabeksen:hover {
+    color: #FF0000;
+}
 #box-table-a
 {
 	font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
@@ -544,12 +577,12 @@ if($cek_kunci == 'false'){ ?>
 						<a href=""><button id="gdwpm_tombol_info_folder_baru" name="gdwpm_tombol_info_folder_baru"><?php _e('Reload Now') ?></button></a>
 					</span>
 				</p>
-				<?php add_thickbox();?>
+				<?php add_thickbox(); if(!$gdwpm_ukuran_preview){$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');}?>
 				<p>
 					<span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br /><br />
 						Shortcode: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>"]</code>
 						<br />
-						Shortcode with specific width & height: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>" w="<strong>640</strong>" h="<strong>385</strong>"]</code>
+						Shortcode with specific width & height: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>" w="<strong><?php echo $gdwpm_ukuran_preview[0];?></strong>" h="<strong><?php echo $gdwpm_ukuran_preview[1];?></strong>"]</code>
 						<br />
 						Link URL of your file: https://docs.google.com/uc?id=<strong>GOOGLE-DRIVE-FILE-ID</strong>&export=view 
 						<br />
@@ -1173,6 +1206,25 @@ function gdwpm_action_callback() {
 				
 		echo '<strong>'.$gdwpm_berkas_terpilih_arr[1] . '</strong> has been added to your Media Library';
 		
+	}elseif(isset($_POST['gdwpm_ukuran_preview_lebar']) || isset($_POST['gdwpm_ukuran_preview_tinggi'])){
+		$nonce = $_REQUEST['gdwpm_override_nonce'];
+		
+		if ( ! wp_verify_nonce( $nonce, 'gdwpm_override_dir' ) ) {
+			die('<strong>Oops... failed!</strong>'); 
+		} else {
+			if(!$gdwpm_ukuran_preview){$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');}
+			if (ctype_digit($_POST['gdwpm_ukuran_preview_lebar']) && ctype_digit($_POST['gdwpm_ukuran_preview_tinggi'])) {
+				if($_POST['gdwpm_ukuran_preview_lebar'] > 20 && $_POST['gdwpm_ukuran_preview_tinggi'] > 10){
+					$gdwpm_ukuran_prev_arr = array($_POST['gdwpm_ukuran_preview_lebar'], $_POST['gdwpm_ukuran_preview_tinggi']);
+					update_option('gdwpm_ukuran_preview', $gdwpm_ukuran_prev_arr);	
+					echo '<div id="info">Option saved.</div><div id="hasil">[gdwpm id="<b>YOURGOOGLEDRIVEFILEID</b>" w="<b>'.$gdwpm_ukuran_prev_arr[0].'</b>" h="<b>'.$gdwpm_ukuran_prev_arr[1].'</b>"]</div>';
+				}else{
+					echo '<div id="info"><strong>Warning:</strong> Minimum value is 10.</div><div id="hasil">[gdwpm id="GOOGLEDRIVEFILEID" w="<b>'.$gdwpm_ukuran_preview[0].'</b>" h="<b>'.$gdwpm_ukuran_preview[1].'</b>"]</div>';
+				}
+			}else{
+				echo '<div id="info"><strong>Warning:</strong> Numeric only please.</div><div id="hasil">[gdwpm id="GOOGLEDRIVEFILEID" w="<b>'.$gdwpm_ukuran_preview[0].'</b>" h="<b>'.$gdwpm_ukuran_preview[1].'</b>"]</div>';
+			}
+		}
 	}elseif(isset($_POST['gdwpm_cekbok_opsi_value'])){
 		$nonce = $_REQUEST['gdwpm_override_nonce'];
 		
@@ -1382,10 +1434,8 @@ class GDWPMBantuan {
                 return $this->_service->$name;
         }
         
-		private function formatBytes($fileId, $precision = 2)
+		private function itungUkuran($file_ukuran, $precision = 2)
 		{
-			$file_siap = $this->_service->files->get($fileId);
-			$file_ukuran = $file_siap->fileSize;
 			if($file_ukuran > 0){
 				$base = log($file_ukuran, 1024);
 				$suffixes = array('', ' KB', ' MB', ' GB', ' TB');   
@@ -1486,13 +1536,13 @@ class GDWPMBantuan {
 					$i++; if($i == 1 && $in_type == 'radio'){$checked = 'checked';}else{$checked = '';}
 					$fileId = $child->getId();
 					$file = $this->_service->files->get($fileId); //getDescription getMimeType
-					$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=download" title="Open link in a new window" target="_blank">Download</a>';
-					if(strpos($file->mimeType, 'image') !== false){$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=view" title="Open link in a new window" target="_blank">View</a>';}
+					$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=download" title="Open link in a new window" target="_blank" class="tabeksen">Download</a>';
+					if(strpos($file->mimeType, 'image') !== false){$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=view" title="Open link in a new window" target="_blank" class="tabeksen">View</a>';}
 					$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.$file->mimeType.' | '.$file->title.' | '.$fileId.' | '.$file->description.' | '.$folder_name.'" ' . $checked . '></td><td>'.$fileId.'</td>';
 					$daftarfile .=  '<td title="' . $file->description . '"><img src="' . $file->iconLink . '" title="' . $file->mimeType . '"> ' . $file->title . '</td>';
 					$daftarfile .=  '<!--<td>' . $file->description . '</td>-->';
-					$daftarfile .=  '<td title="md5Checksum : ' . $file->md5Checksum . '">' . $this->formatBytes($fileId) . '</td>';
-					$daftarfile .=  '<td>' . $view . ' | <a href="https://docs.google.com/file/d/'.$fileId.'/preview?TB_iframe=true&width=600&height=550" title="'.$file->title.' ('.$fileId.')" class="thickbox">Preview</a></td></tr>';
+					$daftarfile .=  '<td title="md5Checksum : ' . $file->md5Checksum . '">' . $this->itungUkuran($file->fileSize) . '</td>';
+					$daftarfile .=  '<td>' . $view . ' | <a href="https://docs.google.com/file/d/'.$fileId.'/preview?TB_iframe=true&width=600&height=550" title="'.$file->title.' ('.$fileId.')" class="thickbox tabeksen">Preview</a></td></tr>';
 				}
 				$pageToken = $children->getNextPageToken();
 			} while ($pageToken);
@@ -1503,15 +1553,16 @@ class GDWPMBantuan {
 		}
 }
 
-function formatBytes($size, $precision = 2)
-{
-    $base = log($size, 1024);
-    $suffixes = array('', ' KB', ' MB', ' GB', ' TB');   
-
-    return round(pow(1024, $base - floor($base)), $precision) . $suffixes[floor($base)];
+add_action('media_buttons', 'gdwpm_preview_button', 12);
+function gdwpm_preview_button() {
+    echo '<a href="#" id="masukin-sotkode" class="button"><img src="' . plugins_url( '/images/animation/gdwpm-insert-shortcode.png', __FILE__ ) . '"/>GDWPM Shortcode</a>';
 }
 
 function gdwpm_activate() {
+	$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview'); 	// default value lebar tinggi
+	if(!$gdwpm_ukuran_preview || empty($gdwpm_ukuran_preview)){
+		update_option('gdwpm_ukuran_preview', array('640', '385'));
+	}
 	$gdwpm_opsi_kategori = get_option('gdwpm_opsi_kategori_dr_folder'); 	
 	if(!$gdwpm_opsi_kategori){update_option('gdwpm_opsi_kategori_dr_folder', 'checked');}
 	

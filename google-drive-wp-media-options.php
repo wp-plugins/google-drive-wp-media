@@ -26,6 +26,49 @@ $gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 				</form>
 				</div>
 				<br />
+				<?php
+					$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');
+					if(!$gdwpm_ukuran_preview || empty($gdwpm_ukuran_preview)){
+						$gdwpm_ukuran_preview = array('640', '385');
+						update_option('gdwpm_ukuran_preview', $gdwpm_ukuran_preview);
+					}					
+				?>
+				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
+					<p>Set predefined size for width and height of Google Drive single file preview shortcode. The default values are width = 640 px and height = 385 px.<br /><br />
+						<label for="width" style="margin-left:25px;display:inline-block;width:60px;">Width: </label>
+						<input type="number" id="gdwpm_ukuran_preview_lebar" name="gdwpm_ukuran_preview_lebar" min="50" step="10" value="<?php echo $gdwpm_ukuran_preview[0];?>" size="5" /><br />
+						<label for="height" style="margin-left:25px;display:inline-block;width:60px;">Height: </label>
+						<input type="number" id="gdwpm_ukuran_preview_tinggi" name="gdwpm_ukuran_preview_tinggi" min="20" step="10" value="<?php echo $gdwpm_ukuran_preview[1];?>" size="5" /><br />
+						<dfn style="margin-left:90px;display:inline-block;">*Numeric only.</dfn><br /><br />
+					the Shortcode: <code id="sotkodeprev">[gdwpm id="G.DRIVEFILEID" w="<b><?php echo $gdwpm_ukuran_preview[0];?></b>" h="<b><?php echo $gdwpm_ukuran_preview[1];?></b>"]</code>
+					</p>
+				<button onclick="gdwpm_tombol_ukuran_preview_eksen();" id="gdwpm_tombol_ukuran_preview" name="gdwpm_tombol_ukuran_preview">Save</button>&nbsp;&nbsp;&nbsp; 
+					<span style="display: none" id="gdwpm_tombol_ukuran_preview_gbr">
+						<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
+					</span>
+					<span id="gdwpm_tombol_ukuran_preview_info"></span>
+				</div>
+<script type="text/javascript">
+function gdwpm_tombol_ukuran_preview_eksen(){
+		jQuery("#gdwpm_tombol_ukuran_preview_gbr").show();
+		jQuery('#gdwpm_tombol_ukuran_preview_info').empty();
+		var data = {
+			action: 'gdwpm_on_action',
+			gdwpm_override_nonce: '<?php echo $gdwpm_override_nonce; ?>',
+			gdwpm_ukuran_preview_lebar: jQuery('#gdwpm_ukuran_preview_lebar').val() ,
+			gdwpm_ukuran_preview_tinggi: jQuery('#gdwpm_ukuran_preview_tinggi').val()
+		};
+		jQuery.post(ajax_object.ajax_url, data, function(hasil) {
+			jQuery('#sotkodeprev').empty();
+			jQuery('#gdwpm_tombol_ukuran_preview_gbr').hide();
+			var holder = jQuery('<div/>').html(hasil);
+			jQuery('#gdwpm_tombol_ukuran_preview_info').html(jQuery('#info', holder).html());
+			jQuery('#sotkodeprev').html(jQuery('#hasil', holder).html());
+		});
+}
+
+</script>
+				<br />
 				<?php 
 				$gdwpm_override = get_option('gdwpm_override_dir_bawaan'); // cekbok, polder
 				?>
@@ -49,7 +92,7 @@ $gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 				<span style="display: none" id="gdwpm_cekbok_opsi_override_gbr">
 					<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
 				</span>
-				<span id="gdwpm__cekbok_opsi_override_info"></span>
+				<span id="gdwpm_cekbok_opsi_override_info"></span>
 				</div>
 <script type="text/javascript">	
 function gdwpm_cekbok_opsi_kategori_eksen(){
@@ -79,7 +122,7 @@ function gdwpm_tombol_opsi_override_eksen(){
 		var gdwpm_cekbok_masukperpus = '';
 	}
 		jQuery("#gdwpm_cekbok_opsi_override_gbr").show();
-		jQuery('#gdwpm__cekbok_opsi_override_info').empty();
+		jQuery('#gdwpm_cekbok_opsi_override_info').empty();
 		var data = {
 			action: 'gdwpm_on_action',
 			gdwpm_override_nonce: '<?php echo $gdwpm_override_nonce; ?>',
@@ -89,7 +132,7 @@ function gdwpm_tombol_opsi_override_eksen(){
 		};
 		jQuery.post(ajax_object.ajax_url, data, function(hasil) {
 			jQuery('#gdwpm_cekbok_opsi_override_gbr').hide();
-			jQuery('#gdwpm__cekbok_opsi_override_info').html(hasil);
+			jQuery('#gdwpm_cekbok_opsi_override_info').html(hasil);
 		});
 }
 </script>		
@@ -178,7 +221,7 @@ $gdwpm_dummy_fol = get_option('gdwpm_dummy_folder');
 					<span style="display: none" id="gdwpm_cekbok_opsi_dummy_gbr">
 						<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
 					</span>
-					<span id="gdwpm__cekbok_opsi_dummy_info"></span>
+					<span id="gdwpm_cekbok_opsi_dummy_info"></span>
 				</div>
 <script type="text/javascript">	
 function gdwpm_cekbok_opsi_dummy_eksen(){
@@ -195,7 +238,7 @@ function gdwpm_tombol_opsi_dummy_eksen(){
 		var gdwpm_cekbok = '';
 	}
 		jQuery("#gdwpm_cekbok_opsi_dummy_gbr").show();
-		jQuery('#gdwpm__cekbok_opsi_dummy_info').empty();
+		jQuery('#gdwpm_cekbok_opsi_dummy_info').empty();
 		var data = {
 			action: 'gdwpm_on_action',
 			gdwpm_override_nonce: '<?php echo $gdwpm_override_nonce; ?>',
@@ -203,11 +246,18 @@ function gdwpm_tombol_opsi_dummy_eksen(){
 		};
 		jQuery.post(ajax_object.ajax_url, data, function(hasil) {
 			jQuery('#gdwpm_cekbok_opsi_dummy_gbr').hide();
-			jQuery('#gdwpm__cekbok_opsi_dummy_info').html(hasil);
+			jQuery('#gdwpm_cekbok_opsi_dummy_info').html(hasil);
 		});
 }
   jQuery(function() {
     jQuery( "#gdwpm_tombol_opsi_kategori" )
+      .button({
+      icons: {
+        primary: "ui-icon-disk"
+      }
+    });	
+	
+    jQuery( "#gdwpm_tombol_ukuran_preview" )
       .button({
       icons: {
         primary: "ui-icon-disk"
