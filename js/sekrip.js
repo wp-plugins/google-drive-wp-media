@@ -40,11 +40,13 @@ jQuery(document).ready(function($) {
 	$('#tombol-donat').remove();
 	$('.updated').hide();
 		$('#hasil').empty();
+		$('#vaginasi').empty();
 	$('#gdwpm_masuk_perpus_teks').hide();
 		$('#hasil').hide();
 	var data = {
 		action: 'gdwpm_on_action',
-		folder_pilian: $('select[name=folder_pilian]').val()
+		folder_pilian: $('select[name=folder_pilian]').val(),
+		pilmaxres: $('#pilihMaxRes').val()
 	};
 	
 	jQuery.post(ajax_object.ajax_url, data, function(response) {
@@ -57,10 +59,46 @@ jQuery(document).ready(function($) {
 		var $holder = $('<div/>').html(response);
 $('.sukses').html($('.sukses', $holder).html());
 $('#hasil').html($('#hasil', $holder).html());
-	$('.sukses').show();
+$('#vaginasi').html($('#vaginasi', $holder).html());
+	$('.sukses').show();	
+		$('#vaginasi').buttonset({});
 	$('#gdwpm_add_to_media_gbr').hide();
 	var pilBaris = $('#pilihBaris').val();
 		jumBaris(pilBaris);
+	});
+    }); 
+	$('body').on('click', '#halaman', function() {
+        $("#gdwpm_loading_gbr").show();
+		$('.sukses').empty();
+		$('.sukses').hide();
+		$('.updated').hide();
+		$('#hasil').empty();
+		$('#gdwpm_masuk_perpus_teks').hide();
+		$('#hasil').hide();		
+		var clicked = $(this);
+	var data = {
+		action: 'gdwpm_on_action',
+		folder_pilian: $('#folid').val(),
+		pilmaxres: $('#maxres').val(),
+		pagetoken: clicked.val()
+	};
+	
+	jQuery.post(ajax_object.ajax_url, data, function(response) {
+		$("#gdwpm_loading_gbr").hide();
+		$('#hasil').show();
+		if(response.indexOf("radio") > 1){
+		$('#gdwpm_masuk_perpus_teks').show();}
+		$('#gdwpm_info_masuk_perpus').empty();
+		$('#vaginasi').empty();
+		var $holder = $('<div/>').html(response);
+		$('.sukses').html($('.sukses', $holder).html());
+		$('#hasil').html($('#hasil', $holder).html());
+		$('#vaginasi').html($('#vaginasi', $holder).html());
+		$('.sukses').show();
+		$('#vaginasi').buttonset({});
+		$('#gdwpm_add_to_media_gbr').hide();
+		var pilBaris = $('#pilihBaris').val();
+			jumBaris(pilBaris);
 	});
     }); 
 	$("#gdwpm_berkas_masuk_perpus").click(function(){
@@ -68,7 +106,7 @@ $('#hasil').html($('#hasil', $holder).html());
 		$('#gdwpm_info_masuk_perpus').empty();
 	var data = {
 		action: 'gdwpm_on_action',
-		masuk_perpus: $("input:radio[name='gdwpm_berkas_terpilih[]']:checked").val()      // We pass php values differently!
+		masuk_perpus: $("input:radio[name='gdwpm_berkas_terpilih[]']:checked").val()
 	};
 	jQuery.post(ajax_object.ajax_url, data, function(dataPerpus) {
 		$('#gdwpm_add_to_media_gbr').hide();
@@ -84,9 +122,11 @@ $('#hasil').html($('#hasil', $holder).html());
 	$('#hasil_del').empty();
 	$('#gdwpm_info_del').hide();
 	$('#hasil_del').hide();
+		$('#vaginasi_del').empty();
 	var data = {
 		action: 'gdwpm_on_action',
-		folder_pilian_file_del: $('select[name=folder_pilian_file_del]').val()
+		folder_pilian_file_del: $('select[name=folder_pilian_file_del]').val(),
+		pilmaxres: $('#pilihMaxResdel').val()
 	};
 	
 	jQuery.post(ajax_object.ajax_url, data, function(responsedel) {
@@ -95,11 +135,13 @@ $('#hasil').html($('#hasil', $holder).html());
 		var holder = $('<div/>').html(responsedel);
 $('.sukses_del').html($('.sukses_del', holder).html());
 $('#hasil_del').html($('#hasil_del', holder).html());
+$('#vaginasi_del').html($('#vaginasi_del', holder).html());
 	$('.sukses_del').show();
+		$('#vaginasi_del').buttonset({});
 		
 	});
     }); 
-	
+  
 	
 	 $("#hasil_del").click(function(){
     var len = $("#hasil_del input[name='gdwpm_buang_berkas_terpilih[]']:checked").length;
@@ -108,6 +150,34 @@ $('#hasil_del').html($('#hasil_del', holder).html());
 	}else{
 		$('#gdwpm_info_del').hide();
 	}
+    }); 
+	
+	$('body').on('click', '#halaman_del', function() {
+        $("#gdwpm_loading_gbr_del").show();
+		$('.sukses_del').empty();
+		$('.sukses_del').hide();
+		$('#hasil_del').empty();
+		$('#hasil_del').hide();		
+		$('#gdwpm_info_del').hide();
+		var clicked = $(this);
+	var data = {
+		action: 'gdwpm_on_action',
+		folder_pilian_file_del: $('#folid_del').val(),
+		pilmaxres: $('#maxres_del').val(),
+		pagetoken: clicked.val()
+	};
+	
+	jQuery.post(ajax_object.ajax_url, data, function(responsedel) {
+		$("#gdwpm_loading_gbr_del").hide();
+		$('#hasil_del').show();
+		$('#vaginasi_del').empty();
+		var holder = $('<div/>').html(responsedel);
+		$('.sukses_del').html($('.sukses_del', holder).html());
+		$('#hasil_del').html($('#hasil_del', holder).html());
+		$('#vaginasi_del').html($('#vaginasi_del', holder).html());
+		$('.sukses_del').show();
+		$('#vaginasi_del').buttonset({});
+	});
     }); 
 	
 	$("#gdwpm_aplot_masuk").click(function(){

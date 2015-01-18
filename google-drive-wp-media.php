@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.1
+Version: 2.2
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.1' );
+define( 'VERSI_GDWPM', '2.2' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -571,7 +571,11 @@ if($cek_kunci == 'false'){ ?>
 					<img src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" alt="Donate Button with Credit Cards" /></a>
 					</p>						
 				</div>
-				<p>Select folder: <?php echo $folderpil; ?> <button id="golek_seko_folder" name="golek_seko_folder"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
+				<p>Select folder: <?php echo $folderpil; ?> <select id="pilihMaxRes">
+				<?php for($i=1;$i<=10;$i++){$inum = $i * 10;?>
+				<option value="<?php echo $inum;?>"><?php echo $inum;?> items/page</option>				
+				<?php } ?>
+				</select> <button id="golek_seko_folder" name="golek_seko_folder"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
 					<span id="gdwpm_info_folder_baru" style="display:none;">
 						You have created at least one folder.
 						<a href=""><button id="gdwpm_tombol_info_folder_baru" name="gdwpm_tombol_info_folder_baru"><?php _e('Reload Now') ?></button></a>
@@ -601,6 +605,7 @@ if($cek_kunci == 'false'){ ?>
 				  <center><img src="<?php echo plugins_url( '/images/animation/ajax_loader_blue_256.gif', __FILE__ );?>" /><br />Please wait...</center>
 				</div>
 				<div id="hasil"></div>
+				<div id="vaginasi" style="text-align:center;margin-top:25px;"></div>
 				<div style="display: none" id="gdwpm_masuk_perpus_teks"><p>Pick a file to include it in the Media Library.</p>
 					<p>
 						<button id="gdwpm_berkas_masuk_perpus" name="gdwpm_berkas_masuk_perpus">Add to Media Library</button>&nbsp;&nbsp;&nbsp; 
@@ -638,7 +643,8 @@ if($cek_kunci == 'false'){ ?>
 					<input type='checkbox' id='gdwpm_cekbok_masukperpus' name='gdwpm_cekbok_masukperpus' value='1' checked /> Add to Media Library. (just linked to, all files still remain in Google Drive)<!-- (Image only: <i>*.jpg, *.jpeg, *.png, & *.gif</i>)--><p>
 					<a style="display:none;" id="gdwpm_start-upload" href="javascript:;"><button id="gdwpm_tombol_upload">Upload to Google Drive</button></a>
 				</div>
-				<img id="gdwpm_loding_128" style="margin: 0 0 0 111px;display:none;" src="<?php echo plugins_url( '/images/animation/ajax_loader_blue_128.gif', __FILE__ );?>">
+				<div id="gdwpm_loding_128" style="display:none;"><center>
+				<img src="<?php echo plugins_url( '/images/animation/ajax_loader_blue_128.gif', __FILE__ );?>"><br/>Uploadng...</center></div>
  
 <script type="text/javascript"> 
 	var uploader = new plupload.Uploader({
@@ -757,7 +763,11 @@ if($cek_kunci == 'false'){ ?>
 					</p>
 				</div>
 				<div id="gdwpm_kotak_buang_file" class="ui-widget-content ui-corner-all" style="padding:1em;display:none;">					
-				<p>Select folder: <?php echo str_replace('folder_pilian', 'folder_pilian_file_del', $folderpil); ?> <button id="gdwpm_file_dr_folder" name="gdwpm_file_dr_folder"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
+				<p>Select folder: <?php echo str_replace('folder_pilian', 'folder_pilian_file_del', $folderpil); ?> <select id="pilihMaxResdel">
+				<?php for($i=1;$i<=10;$i++){$inum = $i * 10;?>
+				<option value="<?php echo $inum;?>"><?php echo $inum;?> items/page</option>				
+				<?php } ?>
+				</select> <button id="gdwpm_file_dr_folder" name="gdwpm_file_dr_folder"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
 					
 				<p>
 					<span class="sukses_del">Please select folder and click Get Files, to show all files belongs to it.
@@ -775,6 +785,7 @@ if($cek_kunci == 'false'){ ?>
 					</p>
 				</div>
 				</form>
+				<div id="vaginasi_del" style="text-align:center;margin-top:25px;"></div>
 				</div>
 <div id="dialog-buang-folder" title="Confirm Deletion" style="display: none;">
   <p>
@@ -980,7 +991,6 @@ jQuery(function(){
 				<li>Google Drive API & products are owned by Google inc.</li> 
 				<li>Table Style credit to R. Christie (SmashingMagazine).</li> 
 				<li>DriveServiceHelper Class credit to Lukasz Kujawa.</li> 
-				<li>Loading images animation credit to mytreedb project.</li> 
 				<li>JQuery Upload credit to PLUpload by Moxiecode Systems AB.</li> 
 				<li>JQuery User Interface credit to JQueryUI.</li> 
 				<li>Alternative openssl sign function credit to Rochelle Alder.</li> 
@@ -1170,32 +1180,37 @@ function gdwpm_action_callback() {
 	if(isset($_POST['folder_pilian'])){
 	$gdwpm_apiConfig['use_objects'] = true;
 	$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
-		$folder_pilian =  $_POST['folder_pilian'] ;
 		$fld = $_POST['folder_pilian'];
-		$daftar_berkas = $gdwpm_service->getFilesInFolder($fld);
-		$daftarfile = $daftar_berkas[0];
-		$i = $daftar_berkas[1];
+		if(isset($_POST['pagetoken'])){
+			$daftar_berkas = $gdwpm_service->getFilesInFolder($fld, $_POST['pilmaxres'], $_POST['pagetoken']);
+		}else{
+			$daftar_berkas = $gdwpm_service->getFilesInFolder($fld, $_POST['pilmaxres']);
+		}
 		
-		if($i <= 0){
+		if($daftar_berkas[1] <= 0){
 			$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
 		}
 		
-		echo '<div class="sukses"><p>Your current Folder ID is <strong>'.$fld.'</strong> and <strong>'.$i.' files</strong> detected in this folder.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/page</option><option value="10" selected="selected">10 rows/page</option>   <option value="15">15 rows/page</option><option value="20">20 rows/page</option><option value="25">25 rows/page</option><option value="30">30 rows/page</option></select></p></div>';
+		echo '<div class="sukses"><p>Folder ID: <strong>'.$fld.'</strong> and items on current page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/page</option><option value="10" selected="selected">10 rows/page</option>   <option value="15">15 rows/page</option><option value="20">20 rows/page</option><option value="25">25 rows/page</option><option value="30">30 rows/page</option></select></p></div>';
 			
-		echo $daftarfile;
+		echo $daftar_berkas[0];
 		
 	}elseif(isset($_POST['folder_pilian_file_del'])){
 	$gdwpm_apiConfig['use_objects'] = true;
 	$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
 		$fld = $_POST['folder_pilian_file_del'];
-		$daftar_berkas = $gdwpm_service->getFilesInFolder($fld, 'checkbox');
+		if(isset($_POST['pagetoken'])){
+			$daftar_berkas = $gdwpm_service->getFilesInFolder($fld, $_POST['pilmaxres'], $_POST['pagetoken'], 'checkbox');
+		}else{
+			$daftar_berkas = $gdwpm_service->getFilesInFolder($fld, $_POST['pilmaxres'], null, 'checkbox');
+		}
 		$daftarfile = $daftar_berkas[0];
 		$i = $daftar_berkas[1];
 		
 		if($i <= 0){
 			$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
 		}
-		echo '<div class="sukses_del"><p>Your current Folder ID is <strong>'.$fld.'</strong> and <strong>'.$i.' files</strong> detected in this folder.</p></div>';
+		echo '<div class="sukses_del"><p>Folder ID: <strong>'.$fld.'</strong> and items on current page: <strong>'.$i.'</strong>.</p></div>';
 		//$daftarfile = str_replace('radio', 'checkbox', $daftarfile);
 		//$daftarfile = str_replace('<div id="hasil">', '<div id="hasil_del">', $daftarfile);
 		echo $daftarfile;
@@ -1424,7 +1439,7 @@ class GDWPMBantuan {
                 $client->setAssertionCredentials( new Google_AssertionCredentials(
                                 $serviceAccountName,
                                 $this->scope,
-                                @file_get_contents( $key ) )
+                                $this->getKonten( $key ) )
                 );
                 
                 $this->_service = new Google_DriveService($client);
@@ -1432,6 +1447,24 @@ class GDWPMBantuan {
         
         public function __get( $name ) {
                 return $this->_service->$name;
+        }
+        
+        public function getKonten( $url ) {
+			if(function_exists('curl_version')){
+				$data = curl_init();
+				curl_setopt($data, CURLOPT_RETURNTRANSFER, 1);
+				curl_setopt($data, CURLOPT_URL, $url);
+				curl_setopt($data, CURLOPT_FOLLOWLOCATION,TRUE);
+				curl_setopt($data, CURLOPT_SSL_VERIFYPEER, FALSE);     
+				curl_setopt($data, CURLOPT_SSL_VERIFYHOST, 2); 
+				curl_setopt($data, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201');
+				$hasil = curl_exec($data);
+				curl_close($data);
+				return $hasil;
+			}else{
+				$hasil = @file_get_contents(str_replace(' ', '%20', $url));
+				return $hasil;
+			}
         }
         
 		private function itungUkuran($file_ukuran, $precision = 2)
@@ -1511,46 +1544,116 @@ class GDWPMBantuan {
                 return false;
         }
 		
-		public function getFilesInFolder($folderId, $in_type = 'radio') {
+		public function getFilesInFolder($folderId, $maxResults, $pageToken = '', $in_type = 'radio') {
 			if($in_type == 'radio'){
 				$div_id = 'hasil';
+				$id_max = 'maxres';
+				$id_folid = 'folid';
+				$id_tblpagi = 'paginasi';
+				$div_hal = 'halaman';
+				$div_pagi = 'vaginasi';
+				$opsi_kecing = 'gdwpm_kecing_hal';
 				$in_name = 'gdwpm_berkas_terpilih[]';
 			}else{
 				$div_id = 'hasil_del';
+				$id_max = 'maxres_del';
+				$id_folid = 'folid_del';
+				$id_tblpagi = 'paginasi_del';
+				$div_hal = 'halaman_del';
+				$div_pagi = 'vaginasi_del';
+				$opsi_kecing = 'gdwpm_kecing_hal_del';
 				$in_name = 'gdwpm_buang_berkas_terpilih[]';
 			}
+			//setup 1st pagetokn is always enpty n create pagintion butt
+			$haldepan = 1;
+			////$hal = '<input type="hidden" id="maxres" value="'.$maxResults.'" /><button id="halaman" value="">'.$haldepan.'</button>';
+			$parameters = array();
+			$parameters[maxResults] = $maxResults;
+			$gdwpm_kecing_hal = get_option($opsi_kecing);
+			if(!$gdwpm_kecing_hal || empty($gdwpm_kecing_hal)){$gdwpm_kecing_hal = array();}
+			if (empty($pageToken) || $pageToken == '') {
+				$errormes = '';
+				$halarr = array($haldepan => 'bantuanhalamansatu');
+				do {
+					$haldepan++;
+					try {
+						$parameters['pageToken'] = $pageToken;
+						$children = $this->_service->children->listChildren($folderId, $parameters);
+						$pageToken = $children->getNextPageToken();
+						if($pageToken){
+							//$hal .= '&nbsp;<button id="halaman" value="'.$pageToken.'">'.$haldepan.'</button>';
+							$halarr[$haldepan] = $pageToken;
+						}
+					} catch (Exception $e) {
+					  $errormes = "<kbd>An error occurred: " . $e->getMessage() . "</kbd>";
+					  $pageToken = NULL;
+					}
+				} while ($pageToken);
+				unset($parameters['pageToken']);
+				$gdwpm_kecing_hal[$folderId] = $halarr;
+				update_option($opsi_kecing, $gdwpm_kecing_hal);
+			}else{
+				$parameters['pageToken'] = $pageToken;
+				if($pageToken == 'bantuanhalamansatu'){
+					unset($parameters['pageToken']);
+				}
+			}
+			// merangkai paginasi soretempe
+			$range = 5; 
+			$showitems = ($range * 2)+1;  
+			$hal_folderid = $gdwpm_kecing_hal[$folderId];
+			$halterlihat = array_search($pageToken, $hal_folderid);
+			if(empty($halterlihat)){$halterlihat = 1;}
+			$totalhal = count($hal_folderid);
+			 if(1 != $totalhal)
+			 {
+				 $halsiap = '<input type="hidden" id="'.$id_max.'" value="'.$maxResults.'" /><input type="hidden" id="'.$id_folid.'" value="'.$folderId.'" />';
+				 if($halterlihat > 2 && $halterlihat > $range+1 && $showitems < $totalhal) $halsiap .= '<button id="'.$div_hal.'" value="'.$hal_folderid[1].'">&laquo;</button>';
+				 if($halterlihat > 1 && $showitems < $totalhal) $halsiap .= '<button id="'.$div_hal.'" value="'.$hal_folderid[$halterlihat - 1].'">&lsaquo;</button>';
+				 
+				 for ($i=1; $i <= $totalhal; $i++)
+				 {
+					 if (1 != $totalhal &&( !($i >= $halterlihat+$range+1 || $i <= $halterlihat-$range-1) || $totalhal <= $showitems ))
+					 {
+						if($halterlihat == $i){$disable_butt = ' disabled';}else{$disable_butt = '';}
+						$halsiap .= '<button id="'.$div_hal.'" value="'.$hal_folderid[$i].'"'.$disable_butt.'>'.$i.'</button>';
+					 }
+				 }
+
+				 if ($halterlihat < $totalhal && $showitems < $totalhal) $halsiap .= '<button id="'.$div_hal.'" value="'.$hal_folderid[$halterlihat + 1].'">&rsaquo;</button>';
+				 if ($halterlihat < $totalhal-1 &&  $halterlihat+$range-1 < $totalhal && $showitems < $totalhal) $halsiap .= '<button id="'.$div_hal.'" value="'.$hal_folderid[$totalhal].'">&raquo;</button>';
+			 }
+							
 			$folder_proper = $this->_service->files->get($folderId);
 			$folder_name = $folder_proper->title;
-			$pageToken = NULL;
-
-			do {
-				$parameters = array();
-				if ($pageToken) {
-					$parameters['pageToken'] = $pageToken;
-				}
-				$parameters['maxResults'] = 1000;
-				$children = $this->_service->children->listChildren($folderId, $parameters);
-				$daftarfile =  '<div id="'.$div_id.'"><table id="box-table-a" summary="File Folder" class="paginasi"><thead><tr><th scope="col"><span class="ui-icon ui-icon-check"></span></th><th scope="col">File ID</th><th scope="col">Title</th><!--<th scope="col">Description</th>--><th scope="col">Size</th><th scope="col">Action</th></tr></thead>';
-				$i = 0;
-				foreach ($children->getItems() as $child) {
-					$i++; if($i == 1 && $in_type == 'radio'){$checked = 'checked';}else{$checked = '';}
-					$fileId = $child->getId();
-					$file = $this->_service->files->get($fileId); //getDescription getMimeType
-					$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=download" title="Open link in a new window" target="_blank" class="tabeksen">Download</a>';
-					if(strpos($file->mimeType, 'image') !== false){$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=view" title="Open link in a new window" target="_blank" class="tabeksen">View</a>';}
-					$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.$file->mimeType.' | '.$file->title.' | '.$fileId.' | '.$file->description.' | '.$folder_name.'" ' . $checked . '></td><td>'.$fileId.'</td>';
-					$daftarfile .=  '<td title="' . $file->description . '"><img src="' . $file->iconLink . '" title="' . $file->mimeType . '"> ' . $file->title . '</td>';
-					$daftarfile .=  '<!--<td>' . $file->description . '</td>-->';
-					$daftarfile .=  '<td title="md5Checksum : ' . $file->md5Checksum . '">' . $this->itungUkuran($file->fileSize) . '</td>';
-					$daftarfile .=  '<td>' . $view . ' | <a href="https://docs.google.com/file/d/'.$fileId.'/preview?TB_iframe=true&width=600&height=550" title="'.$file->title.' ('.$fileId.')" class="thickbox tabeksen">Preview</a></td></tr>';
-				}
-				$pageToken = $children->getNextPageToken();
-			} while ($pageToken);
+			$i = 0;
+				$daftarfile =  '<div id="'.$div_id.'"><table id="box-table-a" summary="File Folder" class="'.$id_tblpagi.'"><thead><tr><th scope="col"><span class="ui-icon ui-icon-check"></span></th><th scope="col">File ID</th><th scope="col">Title</th><!--<th scope="col">Description</th>--><th scope="col">Size</th><th scope="col">Action</th></tr></thead>';
+					$children = $this->_service->children->listChildren($folderId, $parameters);
+					foreach ($children->getItems() as $child) {
+						$i++; if($i == 1 && $in_type == 'radio'){$checked = 'checked';}else{$checked = '';}
+						$fileId = $child->getId(); 
+						$file = $this->_service->files->get($fileId); //getDescription getMimeType
+						$file_mime = $file->mimeType;
+						$file_title = $file->title;
+						$file_desc = $file->description;
+						$file_icon = $file->iconLink;
+						$file_md5 = $file->md5Checksum;
+						$file_size = $this->itungUkuran($file->fileSize);
+										
+						$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=download" title="Open link in a new window" target="_blank" class="tabeksen">Download</a>';
+						if(strpos($file_mime, 'image') !== false){$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=view" title="Open link in a new window" target="_blank" class="tabeksen">View</a>';}
+						$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.$file_mime.' | '.$file_title.' | '.$fileId.' | '.$file_desc.' | '.$folder_name.'" ' . $checked . '></td><td>'.$fileId.'</td>';
+						$daftarfile .=  '<td title="' . $file_desc . '"><img src="' . $file_icon . '" title="' . $file_mime . '"> ' . $file_title . '</td>';
+						$daftarfile .=  '<!--<td>' . $file_desc . '</td>-->';
+						$daftarfile .=  '<td title="md5Checksum : ' . $file_md5 . '">' . $file_size . '</td>';
+						$daftarfile .=  '<td>' . $view . ' | <a href="https://docs.google.com/file/d/'.$fileId.'/preview?TB_iframe=true&width=600&height=550" title="'.$file_title.' ('.$fileId.')" class="thickbox tabeksen">Preview</a></td></tr>';
+					}
+			$vaginasi =	'<div id="'.$div_pagi.'">'.$halsiap.'</div>';
 			$daftarfile .=  '</tbody></table>';
-			$daftarfile .= '</div>';
-		
-			return array($daftarfile, $i);
+			$daftarfile .= '</div><br/>'.$vaginasi;
+			return array($daftarfile, $i);//, $halterlihat, $totalhal);//items, items onpage, currentpage, totalpage
 		}
+		
 }
 
 add_action('media_buttons', 'gdwpm_preview_button', 12);
