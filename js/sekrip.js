@@ -60,6 +60,18 @@ jQuery(document).ready(function($) {
 $('.sukses').html($('.sukses', $holder).html());
 $('#hasil').html($('#hasil', $holder).html());
 $('#vaginasi').html($('#vaginasi', $holder).html());
+$("#hasil").tooltip({
+    items: "td.kolom_file",
+	track: true,
+	show: { effect: 'slideDown' },
+    open: function (event, ui) { setTimeout(function () {
+			$(ui.tooltip).hide('explode');
+        }, 5000); },
+    content: function(){
+           var src = $(this).attr('title');
+           return '<img src="'+ src +'" />' ;
+    }
+});
 	$('.sukses').show();	
 		$('#vaginasi').buttonset({});
 	$('#gdwpm_add_to_media_gbr').hide();
@@ -136,6 +148,18 @@ $('#vaginasi').html($('#vaginasi', $holder).html());
 $('.sukses_del').html($('.sukses_del', holder).html());
 $('#hasil_del').html($('#hasil_del', holder).html());
 $('#vaginasi_del').html($('#vaginasi_del', holder).html());
+$("#hasil_del").tooltip({
+    items: "td.kolom_file",
+	track: true,
+	show: { effect: 'slideDown' },
+    open: function (event, ui) { setTimeout(function () {
+			$(ui.tooltip).hide('explode');
+        }, 5000); },
+    content: function(){
+           var src = $(this).attr('title');
+           return '<img src="'+ src +'" />' ;
+    }
+});
 	$('.sukses_del').show();
 		$('#vaginasi_del').buttonset({});
 		

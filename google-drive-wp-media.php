@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.2.1
+Version: 2.2.2
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.2.1' );
+define( 'VERSI_GDWPM', '2.2.2' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -406,9 +406,15 @@ jQuery(function() {
 		heightStyle: "content",
 		icons: icons
     });
-  
-    var tooltips = jQuery( "[title]" ).tooltip();
- 
+	  
+	jQuery("[title]").tooltip({ 
+		track: true,
+		show: { effect: 'slideDown' },
+		open: function (event, ui) { setTimeout(function () {
+				jQuery(ui.tooltip).hide('explode');
+			}, 3000); }
+	});
+     
 	jQuery( "#tabs" ).tabs({
 		beforeLoad: function( event, ui ) {
 			ui.jqXHR.error(function() {
@@ -896,7 +902,7 @@ jQuery(function(){
 			</ul>
 			<div id="gdwpm-settingtabs-1">
 			
-				<table>
+				<table id="gdwpm_form_konci">
 					<tr>
 						<td>
 				<form name="gdwpm_isi_akun" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
@@ -931,7 +937,7 @@ jQuery(function(){
 						</td>
 						<td>: </td>
 						<td>
-							<input type="text" name="gdwpm_kunci_rhs" value="<?php echo $gdwpm_opt_akun[3];?>"  title="eg: http://yourdomain.com/path/to/123xxx-privatekey.p12." size="75">
+							<input type="text" name="gdwpm_kunci_rhs" value="<?php echo $gdwpm_opt_akun[3];?>"  title="eg: http://yourdomain.com/path/to/123xxx-privatekey.p12" size="75">
 						</td>
 					</tr>
 				</table>
@@ -1456,7 +1462,7 @@ class GDWPMBantuan {
 				curl_setopt($data, CURLOPT_URL, $url);
 				curl_setopt($data, CURLOPT_FOLLOWLOCATION,TRUE);
 				curl_setopt($data, CURLOPT_SSL_VERIFYPEER, FALSE);     
-				curl_setopt($data, CURLOPT_SSL_VERIFYHOST, 2); 
+				curl_setopt($data, CURLOPT_SSL_VERIFYHOST, FALSE); 
 				curl_setopt($data, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201');
 				$hasil = curl_exec($data);
 				curl_close($data);
@@ -1633,16 +1639,16 @@ class GDWPMBantuan {
 						$i++; if($i == 1 && $in_type == 'radio'){$checked = 'checked';}else{$checked = '';}
 						$fileId = $child->getId(); 
 						$file = $this->_service->files->get($fileId); //getDescription getMimeType
-						$file_mime = $file->mimeType;
-						$file_title = $file->title;
-						$file_desc = $file->description;
-						$file_icon = $file->iconLink;
-						$file_md5 = $file->md5Checksum;
-						$file_size = $this->itungUkuran($file->fileSize);
-										
+						$file_mime = $file->getMimeType();
+						$file_title = $file->getTitle();
+						$file_desc = $file->getDescription();
+						$file_icon = $file->getIconLink();
+						$file_md5 = $file->getMd5Checksum();
+						$file_size = $this->itungUkuran($file->getFileSize());
+						$file_thumb = $file->getThumbnailLink();	// str_replace('=s220', '=s300', $file->getThumbnailLink());		
 						$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=download" title="Open link in a new window" target="_blank" class="tabeksen">Download</a>';
 						if(strpos($file_mime, 'image') !== false){$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=view" title="Open link in a new window" target="_blank" class="tabeksen">View</a>';}
-						$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.$file_mime.' | '.$file_title.' | '.$fileId.' | '.$file_desc.' | '.$folder_name.'" ' . $checked . '></td><td>'.$fileId.'</td>';
+						$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.$file_mime.' | '.$file_title.' | '.$fileId.' | '.$file_desc.' | '.$folder_name.'" ' . $checked . '></td><td class="kolom_file" title="' . $file_thumb . '">'.$fileId.'</td>';
 						$daftarfile .=  '<td title="' . $file_desc . '"><img src="' . $file_icon . '" title="' . $file_mime . '"> ' . $file_title . '</td>';
 						$daftarfile .=  '<!--<td>' . $file_desc . '</td>-->';
 						$daftarfile .=  '<td title="md5Checksum : ' . $file_md5 . '">' . $file_size . '</td>';
