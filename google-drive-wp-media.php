@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.2.2
+Version: 2.2.3
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.2.2' );
+define( 'VERSI_GDWPM', '2.2.3' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -107,8 +107,14 @@ if(isset($_REQUEST['gdwpm_opsi_kategori_nonce'])){
 // SHORTCODE  ===> [gdwpm id="GOOGLE-DRIVE-FILE-ID" w="640" h="385"]
 function gdwpm_iframe_shortcode($gdwpm_kode_berkas) {
 	$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview'); 
-	$gdwpm_kode_berkas = shortcode_atts( array( 'id' => '', 'w' => $gdwpm_ukuran_preview[0], 'h' => $gdwpm_ukuran_preview[1]), $gdwpm_kode_berkas, 'gdwpm' );
-    return '<iframe src="https://docs.google.com/file/d/' . $gdwpm_kode_berkas['id'] . '/preview" width="' . $gdwpm_kode_berkas['w'] . '" height="' . $gdwpm_kode_berkas['h'] . '"></iframe>';	 
+	if($gdwpm_kode_berkas['video'] != 'auto' && $gdwpm_kode_berkas['video'] != 'manual'){
+		$gdwpm_kode_berkas = shortcode_atts( array( 'id' => '', 'w' => $gdwpm_ukuran_preview[0], 'h' => $gdwpm_ukuran_preview[1]), $gdwpm_kode_berkas, 'gdwpm' );
+		return '<iframe src="https://docs.google.com/file/d/' . $gdwpm_kode_berkas['id'] . '/preview" width="' . $gdwpm_kode_berkas['w'] . '" height="' . $gdwpm_kode_berkas['h'] . '"></iframe>';
+	}else{
+			$gdwpm_kode_berkas = shortcode_atts( array( 'id' => '', 'w' => $gdwpm_ukuran_preview[4], 'h' => $gdwpm_ukuran_preview[5], 'video' => $gdwpm_ukuran_preview[3]), $gdwpm_kode_berkas, 'gdwpm' );
+			if($gdwpm_kode_berkas['video'] == 'auto'){$mode_autoplay = '1';}else{$mode_autoplay = '0';}
+			return '<embed src="https://video.google.com/get_player?autoplay=' . $mode_autoplay . '&amp;docid=' . $gdwpm_kode_berkas['id'] . '&amp;ps=docs&amp;partnerid=30" type="application/x-shockwave-flash" allowfullscreen="true" allowScriptAccess="always" width="' . $gdwpm_kode_berkas['w'] . '" height="' . $gdwpm_kode_berkas['h'] . '"></embed>';
+	}
 }
 add_shortcode('gdwpm', 'gdwpm_iframe_shortcode'); 
 
@@ -199,8 +205,13 @@ jQuery(function($) {
 			var self = this;
 			this.window.on('select', function() {
                 var first = self.window.state().get('selection').first().toJSON();
-				if (first.url.indexOf("google.com") > 0 || first.url.indexOf("gdwpm_images") > 0){
-					wp.media.editor.insert('[gdwpm id="' + first.filename + '" w="<?php echo $gdwpm_ukuran_preview[0];?>" h="<?php echo $gdwpm_ukuran_preview[1];?>"]');
+				if (first.url.indexOf("google.com") > -1 || first.url.indexOf("gdwpm_images") > -1){
+					var gdwpm_video_cekbok = '<?php echo $gdwpm_ukuran_preview[2];?>';
+					if (first.mime.indexOf("video/") > -1 && gdwpm_video_cekbok == 'checked'){
+						wp.media.editor.insert('[gdwpm id="' + first.filename + '" video="<?php echo $gdwpm_ukuran_preview[3];?>" w="<?php echo $gdwpm_ukuran_preview[4];?>" h="<?php echo $gdwpm_ukuran_preview[5];?>"]');
+					}else{
+						wp.media.editor.insert('[gdwpm id="' + first.filename + '" w="<?php echo $gdwpm_ukuran_preview[0];?>" h="<?php echo $gdwpm_ukuran_preview[1];?>"]');
+					}
 				}
             });
 		}
@@ -419,7 +430,7 @@ jQuery(function() {
 		beforeLoad: function( event, ui ) {
 			ui.jqXHR.error(function() {
 				ui.panel.html(
-				"Opening Options tab, please wait.." );
+				"Opening Options tab, please wait.. <p>If this take too long, there's something wrong with your internet connection.<br/>Well, don't be bad.. it's just a guess. :)</p>" );
 			});
 		}
     });
@@ -428,7 +439,7 @@ jQuery(function() {
 		beforeLoad: function( event, ui ) {
 			ui.jqXHR.error(function() {
 				ui.panel.html(
-				"Opening plugin documentation tab, please wait.." );
+				"Opening plugin documentation tab, please wait..<p>If this take too long, there's something wrong with your internet connection.<br/>Well, don't be bad.. it's just a guess. :)</p>" );
 			});
 		}
     });
@@ -437,7 +448,7 @@ jQuery(function() {
 		beforeLoad: function( event, ui ) {
 			ui.jqXHR.error(function() {
 				ui.panel.html(
-				"Opening Themes Setting tab, please wait.." );
+				"Opening Themes Setting tab, please wait..<p>If this take too long, there's something wrong with your internet connection.<br/>Well, don't be bad.. it's just a guess. :)</p>" );
 			});
 		}	
     });
@@ -555,6 +566,7 @@ if($cek_kunci == 'false'){ ?>
 		<?php
 			$gdwpm_tab_opsi_nonce = wp_create_nonce( "gdwpm_tab_opsi_key" );
 			$gdwpm_url_tab_opsi = admin_url( 'admin-ajax.php?action=gdwpm_on_action&gdwpm_tabulasi=opsyen&gdwpm_tab_opsi_nonce=') . $gdwpm_tab_opsi_nonce;
+			$gdwpm_url_tab_info = admin_url( 'admin-ajax.php?action=gdwpm_on_action&gdwpm_tabulasi=infosyen&gdwpm_tab_info_nonce=') . $gdwpm_tab_opsi_nonce;
 		?>
 		<div id="tabs" style="margin:0 -12px 0 -12px;">
 		<ul>
@@ -562,7 +574,7 @@ if($cek_kunci == 'false'){ ?>
 			<li><a href="#tabs-1"><span style="float:left" class="ui-icon ui-icon-script"></span>&nbsp;File & Folder List</a></li>
 			<li><a href="#tabs-2"><span style="float:left" class="ui-icon ui-icon-star"></span>&nbsp;Upload</a></li>
 			<li><a href="<?php echo $gdwpm_url_tab_opsi; ?>"><span style="float:left" class="ui-icon ui-icon-clipboard"></span>&nbsp;Options</a></li>
-			<li><a href="#tabs-4"><span style="float:left" class="ui-icon ui-icon-heart"></span>&nbsp;Account Information</a></li>
+			<li><a href="<?php echo $gdwpm_url_tab_info; ?>"><span style="float:left" class="ui-icon ui-icon-heart"></span>&nbsp;Account Information</a></li>
 			<li><a href="#tabs-5"><span style="float:left" class="ui-icon ui-icon-trash"></span>&nbsp;Removal Tool (Beta)</a></li>
 <?php }else{ ?>
 			<li><a href="#tabs-6"><span style="float:left" class="ui-icon ui-icon-folder-collapsed"></span>&nbsp;Create Folder</a></li>
@@ -571,11 +583,9 @@ if($cek_kunci == 'false'){ ?>
  <?php if (!empty($foldercek)) { ?>
 			<div id="tabs-1">
 				<div id="tombol-donat" class="ui-widget-content ui-corner-all" style="width:200px; float:right; padding:1em;">	
-					<p>If you like this plugin and you feel that this plugin is useful, help keep this plugin free by clicking the donate button. Your donations help keep the plugin updated, maintained and the development motivated. :)
-					</p>
-					<p style="text-align: center;"><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZZNNMX3NZM2G2" target="_blank">
-					<img src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" alt="Donate Button with Credit Cards" /></a>
-					</p>						
+					<p style="text-align: center;">Do you like this plugin?<br/>Please consider to:<br/><br/><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZZNNMX3NZM2G2" target="_blank">
+					<img src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" alt="Donate Button with Credit Cards" /></a><br/>or<br/><a href="https://wordpress.org/support/view/plugin-reviews/google-drive-wp-media?filter=5" target="_blank"><img src="<?php echo plugins_url( '/images/animation/5star-rating.png', __FILE__ );?>" alt="5 Star Rating" title="5 Star Rating" /></a><br/>Your supports help the plugin keep updated & maintained.
+					</p>	
 				</div>
 				<p>Select folder: <?php echo $folderpil; ?> <select id="pilihMaxRes">
 				<?php for($i=1;$i<=10;$i++){$inum = $i * 10;?>
@@ -594,16 +604,18 @@ if($cek_kunci == 'false'){ ?>
 						<br />
 						Shortcode with specific width & height: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>" w="<strong><?php echo $gdwpm_ukuran_preview[0];?></strong>" h="<strong><?php echo $gdwpm_ukuran_preview[1];?></strong>"]</code>
 						<br />
-						Link URL of your file: https://docs.google.com/uc?id=<strong>GOOGLE-DRIVE-FILE-ID</strong>&export=view 
+						Link URL of your file: https://docs.google.com/uc?id=<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>&export=view <br/>
+						or you can use: https://www.googledrive.com/host/<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>
 						<br />
-						Preview: https://docs.google.com/file/d/<strong>GOOGLE-DRIVE-FILE-ID</strong>/preview
+						Preview: https://docs.google.com/file/d/<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>/preview
 						<br />
-						Google Docs Viewer: https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<strong>GOOGLE-DRIVE-FILE-ID</strong>%26export%3Dview
+						Google Docs Viewer: https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>%26export%3Dview<br/>
+						* Replace <code><strong>GOOGLE-DRIVE-FILE-ID</strong></code> with your file ID. 
 						<?php
 							$ebot = $gdwpm_service->getAbout();
 							echo '<br /><br />Storage Usage<br />Total quota: '.size_format($ebot->getQuotaBytesTotal(), 2).'<br />
-							Used quota: '.size_format($ebot->getQuotaBytesUsed(), 2).'<br />
-							Available space: '.size_format($ebot->getQuotaBytesTotal() - $ebot->getQuotaBytesUsed(), 2).'<br />';
+							Quota Used: '.size_format($ebot->getQuotaBytesUsed(), 2).'<br />
+							Available Quota: '.size_format($ebot->getQuotaBytesTotal() - $ebot->getQuotaBytesUsed(), 2).'<br />';
 						?>
 					</span>
 				</p>		
@@ -629,7 +641,7 @@ if($cek_kunci == 'false'){ ?>
 					<!--<p>Short Description: <input type="text" name="gdwpm_aplod_deskrip" value="" size="65" placeholder="Optional"></p>-->
 				<p>
 					<ul>
-						<li><dfn>Your Uploaded files will be listed in "Shared with Me" view (<a href="https://drive.google.com/?authuser=0#shared-with-me" target="_blank">https://drive.google.com/?authuser=0#shared-with-me</a>).
+						<li><dfn>Your Uploaded files will be listed in "Shared with Me" view (<a href="https://drive.google.com/?authuser=0#shared-with-me" target="_blank">https://drive.google.com/?authuser=0#shared-with-me</a>) in the classic Google Drive UI or "Incoming" folder (<a href="https://drive.google.com/drive/#incoming" target="_blank">https://drive.google.com/drive/#incoming</a>) in the new Google Drive UI.
 						</dfn></li>
 						<li><dfn>Accepted Media MIME types: */*</dfn>
 						<!--	<br />&nbsp;<dfn>All Filetypes are allowed.</dfn>
@@ -650,7 +662,7 @@ if($cek_kunci == 'false'){ ?>
 					<a style="display:none;" id="gdwpm_start-upload" href="javascript:;"><button id="gdwpm_tombol_upload">Upload to Google Drive</button></a>
 				</div>
 				<div id="gdwpm_loding_128" style="display:none;"><center>
-				<img src="<?php echo plugins_url( '/images/animation/ajax_loader_blue_128.gif', __FILE__ );?>"><br/>Uploadng...</center></div>
+				<img src="<?php echo plugins_url( '/images/animation/ajax_loader_blue_128.gif', __FILE__ );?>"><br/>Uploading...</center></div>
  
 <script type="text/javascript"> 
 	var uploader = new plupload.Uploader({
@@ -665,7 +677,7 @@ if($cek_kunci == 'false'){ ?>
 	uploader.bind('FilesAdded', function(up, files) {
 		var html = '';
 		plupload.each(files, function(file) {
-			html += '<li id="' + file.id + '"><strong><font color="maroon">' + file.name + '</font></strong> (' + plupload.formatSize(file.size) + ') <b></b> <input type="text" id="' + file.id + 'gdwpm_aplod_deskrip" name="' + file.id + 'lod_deskrip" value="" size="55" placeholder="Short Description (optional)"></li>';
+			html += '<li id="' + file.id + '"><strong><font color="maroon">' + file.name + '</font></strong> (' + plupload.formatSize(file.size) + ') <b></b> <input type="text" id="' + file.id + 'gdwpm_aplod_deskrip" name="' + file.id + 'lod_deskrip" value="" size="55" placeholder="Short Description (optional) *Alphanumeric*"></li>';
 		});
 		
 		document.getElementById('filelist').innerHTML += html;
@@ -674,7 +686,7 @@ if($cek_kunci == 'false'){ ?>
 	});
  
 	uploader.bind('UploadProgress', function(up, file) {
-		document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span><font color="blue">' + file.percent + "%</font></b>  " +  jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val() + "<b></span><hr>";
+		document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span><font color="blue">' + file.percent + "%</font></b>  " +  jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val().replace(/[^\w\s-]/gi, '') + "<b></span><hr>";
 		
 		jQuery('#' + file.id + 'gdwpm_aplod_deskrip').hide();
 		jQuery('#gdwpm_upload_container').hide();
@@ -708,7 +720,7 @@ if($cek_kunci == 'false'){ ?>
  
 	uploader.bind('BeforeUpload', function (up, file) {
 		up.settings.multipart_params = {gdpwm_nm_bks: jQuery("#folder_pilian_aplod option:selected").text(), gdpwm_nm_id: jQuery('select[name=folder_pilian_aplod]').val(), 
-		gdpwm_nm_br: jQuery('#gdwpm_folder_anyar').val(), gdpwm_sh_ds: jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val(), gdpwm_med_ly: jQuery('#gdwpm_cekbok_masukperpus:checked').val(),
+		gdpwm_nm_br: jQuery('#gdwpm_folder_anyar').val(), gdpwm_sh_ds: jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val().replace(/[^\w\s-]/gi, ''), gdpwm_med_ly: jQuery('#gdwpm_cekbok_masukperpus:checked').val(),
 		gdpwm_nama_file: file.name};
 	});  
 	
@@ -723,38 +735,7 @@ if($cek_kunci == 'false'){ ?>
 </script>
 			</div>
 			<!-- tabs-3 ajax -->
-			<div id="tabs-4">
-						<table>
-							<tr>
-								<td>Service Account Name</td><td>: </td>
-								<td><?php echo $ebot->getName();?></td>
-							</tr>
-							<tr>
-								<td>Total quota</td><td>: </td>
-								<td><?php echo size_format($ebot->getQuotaBytesTotal(), 2) . ' ('. $ebot->getQuotaBytesTotal() . ' bytes)';?></td>
-							</tr>
-							<tr>
-								<td>Used quota</td><td>: </td>
-								<td><?php echo size_format($ebot->getQuotaBytesUsed(), 2) . ' ('. $ebot->getQuotaBytesUsed() . ' bytes)';?></td>
-							</tr>
-							<tr>
-								<td>Available space</td><td>: </td>
-								<td><?php $sisakuota = $ebot->getQuotaBytesTotal() - $ebot->getQuotaBytesUsed(); echo size_format($sisakuota, 2) . ' ('. $sisakuota . ' bytes)';?></td>
-							</tr>
-							<tr>
-								<td>Root folder ID</td><td>: </td>
-								<td><?php echo $ebot->getRootFolderId();?></td>
-							</tr>
-							<tr>
-								<td>Domain Sharing Policy</td><td>: </td>
-								<td><?php echo $ebot->getDomainSharingPolicy();?></td>
-							</tr>
-							<tr>
-								<td>Permission Id</td><td>: </td>
-								<td><?php echo $ebot->getPermissionId();?></td>
-							</tr>
-						</table>
-			</div>
+			<!-- tabs-4 ajax -->
 			<div id="tabs-5">
 				<p>What do you want to do?</p>
 				 <p style="margin-left:17px;"><a onclick="gdwpm_cekbok_opsi_buang_folder_eksen();"><input type='radio' name='gdwpm_cekbok_opsi_buang_folder' value='1' /></a> 
@@ -869,19 +850,17 @@ jQuery(function(){
 <?php }else{ ?>
 			<div id="tabs-6">
 				<p>
-					No folder exist/detected in your drive.
+					No folder exist/detected in the "Incoming" or "Shared with me" view in your Google Drive.<br/>
+					For more info about "Incoming" or “Shared with me”, please visit <a href="https://support.google.com/drive/answer/2375057?hl=en" target="_blank">https://support.google.com/drive/answer/2375057?hl=en</a>.
 				</p>
 				<p>
 					This plugin requires at least 1 folder to store your files.
 				</p>
 				<form name="gdwpm_form_gawe_folder" method="post" action="<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>">
-					
 					<?php $gdwpm_gawe_folder_nonce = wp_create_nonce( "gdwpm_gawe_folder_nonce" ); ?>
-		
 					<input type="hidden" name="gdwpm_gawe_folder_nonce" value="<?php echo $gdwpm_gawe_folder_nonce;?>">
-					
 					<p>
-						Folder Name: <input type="text" name="gdwpm_gawe_folder" value=""> <button id="simpen_gawe_folder"><?php _e('Create Folder') ?></button>
+						Folder Name: <input type="text" name="gdwpm_gawe_folder" value="" placeholder="Alphanumeric only"> <button id="simpen_gawe_folder"><?php _e('Create Folder') ?></button>
 					</p>
 				</form>
 			</div>
@@ -1197,7 +1176,7 @@ function gdwpm_action_callback() {
 			$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
 		}
 		
-		echo '<div class="sukses"><p>Folder ID: <strong>'.$fld.'</strong> and items on current page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/page</option><option value="10" selected="selected">10 rows/page</option>   <option value="15">15 rows/page</option><option value="20">20 rows/page</option><option value="25">25 rows/page</option><option value="30">30 rows/page</option></select></p></div>';
+		echo '<div class="sukses"><p>Folder ID: <strong>'.$fld.'</strong> and items on current page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/sheet</option><option value="10" selected="selected">10 rows/sheet</option>   <option value="15">15 rows/sheet</option><option value="20">20 rows/sheet</option><option value="25">25 rows/sheet</option><option value="30">30 rows/sheet</option><option value="40">40 rows/sheet</option><option value="50">50 rows/sheet</option></select></p></div>';
 			
 		echo $daftar_berkas[0];
 		
@@ -1236,9 +1215,19 @@ function gdwpm_action_callback() {
 			if(!$gdwpm_ukuran_preview){$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');}
 			if (ctype_digit($_POST['gdwpm_ukuran_preview_lebar']) && ctype_digit($_POST['gdwpm_ukuran_preview_tinggi'])) {
 				if($_POST['gdwpm_ukuran_preview_lebar'] > 20 && $_POST['gdwpm_ukuran_preview_tinggi'] > 10){
-					$gdwpm_ukuran_prev_arr = array($_POST['gdwpm_ukuran_preview_lebar'], $_POST['gdwpm_ukuran_preview_tinggi']);
-					update_option('gdwpm_ukuran_preview', $gdwpm_ukuran_prev_arr);	
-					echo '<div id="info">Option saved.</div><div id="hasil">[gdwpm id="<b>YOURGOOGLEDRIVEFILEID</b>" w="<b>'.$gdwpm_ukuran_prev_arr[0].'</b>" h="<b>'.$gdwpm_ukuran_prev_arr[1].'</b>"]</div>';
+					if($_POST['gdwpm_cekbok_embed_video'] == 'checked'){
+						if(isset($_POST['gdwpm_video_play_style']) && $_POST['gdwpm_ukuran_video_lebar'] > 20 && $_POST['gdwpm_ukuran_video_tinggi'] > 20 && ctype_digit($_POST['gdwpm_ukuran_video_lebar']) && ctype_digit($_POST['gdwpm_ukuran_video_tinggi'])){
+							$gdwpm_ukuran_prev_arr = array($_POST['gdwpm_ukuran_preview_lebar'], $_POST['gdwpm_ukuran_preview_tinggi'], $_POST['gdwpm_cekbok_embed_video'], $_POST['gdwpm_video_play_style'], $_POST['gdwpm_ukuran_video_lebar'], $_POST['gdwpm_ukuran_video_tinggi']);
+							update_option('gdwpm_ukuran_preview', $gdwpm_ukuran_prev_arr);	
+							echo '<div id="info">Option saved.</div><div id="hasil">[gdwpm id="<b>YOURGOOGLEDRIVEFILEID</b>" w="<b>'.$gdwpm_ukuran_prev_arr[0].'</b>" h="<b>'.$gdwpm_ukuran_prev_arr[1].'</b>"]</div><div id="hasilvid">[gdwpm id="<b>YOURGOOGLEDRIVEFILEID</b>" video="<b>'.$gdwpm_ukuran_prev_arr[3].'</b>" w="<b>'.$gdwpm_ukuran_prev_arr[4].'</b>" h="<b>'.$gdwpm_ukuran_prev_arr[5].'</b>"]</div>';
+						}else{
+							echo '<div id="info"><strong>Warning:</strong> Minimum value is 20.</div><div id="hasil">[gdwpm id="GOOGLEDRIVEFILEID" w="<b>'.$gdwpm_ukuran_preview[0].'</b>" h="<b>'.$gdwpm_ukuran_preview[1].'</b>"]</div>';
+						}
+					}else{
+							$gdwpm_ukuran_prev_arr = array($_POST['gdwpm_ukuran_preview_lebar'], $_POST['gdwpm_ukuran_preview_tinggi'], $_POST['gdwpm_cekbok_embed_video'], $gdwpm_ukuran_preview[3], $gdwpm_ukuran_preview[4], $gdwpm_ukuran_preview[5]);
+							update_option('gdwpm_ukuran_preview', $gdwpm_ukuran_prev_arr);	
+							echo '<div id="info">Option saved.</div><div id="hasil">[gdwpm id="<b>YOURGOOGLEDRIVEFILEID</b>" w="<b>'.$gdwpm_ukuran_prev_arr[0].'</b>" h="<b>'.$gdwpm_ukuran_prev_arr[1].'</b>"]</div>';
+					}
 				}else{
 					echo '<div id="info"><strong>Warning:</strong> Minimum value is 10.</div><div id="hasil">[gdwpm id="GOOGLEDRIVEFILEID" w="<b>'.$gdwpm_ukuran_preview[0].'</b>" h="<b>'.$gdwpm_ukuran_preview[1].'</b>"]</div>';
 				}
@@ -1279,6 +1268,13 @@ function gdwpm_action_callback() {
 				die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
 			} else {
 				require_once 'google-drive-wp-media-options.php';
+			}
+		}elseif($_REQUEST['gdwpm_tabulasi'] == 'infosyen'){
+			$nonce = $_REQUEST['gdwpm_tab_info_nonce'];
+			if ( ! wp_verify_nonce( $nonce, 'gdwpm_tab_opsi_key' ) ) {
+				die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+			} else {
+				require_once 'google-drive-wp-media-info.php';
 			}
 		}elseif($_REQUEST['gdwpm_tabulasi'] == 'apidoku'){
 			$nonce = $_REQUEST['gdwpm_tabulasi_nonce'];
@@ -1394,7 +1390,7 @@ function gdwpm_action_callback() {
 
 				$mime_berkas_arr = wp_check_filetype($filename);
 				$mime_berkas = $mime_berkas_arr['type'];
-				
+				if(empty($mime_berkas)){$mime_berkas = $_FILES['file']['type'];}
 				$folder_ortu = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdpwm_nm_br']);
 				$folder_ortu = sanitize_text_field($folder_ortu);
 				$folderId = $_POST['gdpwm_nm_id'];
@@ -1473,17 +1469,6 @@ class GDWPMBantuan {
 			}
         }
         
-		private function itungUkuran($file_ukuran, $precision = 2)
-		{
-			if($file_ukuran > 0){
-				$base = log($file_ukuran, 1024);
-				$suffixes = array('', ' KB', ' MB', ' GB', ' TB');   
-				return round(pow(1024, $base - floor($base)), $precision) . $suffixes[floor($base)];
-			}else{
-				return $file_ukuran;
-			}
-		}
-
         public function getAbout( ) {
                 return $this->_service->about->get();
         }
@@ -1644,7 +1629,7 @@ class GDWPMBantuan {
 						$file_desc = $file->getDescription();
 						$file_icon = $file->getIconLink();
 						$file_md5 = $file->getMd5Checksum();
-						$file_size = $this->itungUkuran($file->getFileSize());
+						$file_size = size_format($file->getFileSize(), 2);
 						$file_thumb = $file->getThumbnailLink();	// str_replace('=s220', '=s300', $file->getThumbnailLink());		
 						$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=download" title="Open link in a new window" target="_blank" class="tabeksen">Download</a>';
 						if(strpos($file_mime, 'image') !== false){$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=view" title="Open link in a new window" target="_blank" class="tabeksen">View</a>';}
@@ -1668,9 +1653,11 @@ function gdwpm_preview_button() {
 }
 
 function gdwpm_activate() {
-	$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview'); 	// default value lebar tinggi
+	$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview'); 	// default value lebar tinggi vidchecked vidauto vidlebar vidtinggi
 	if(!$gdwpm_ukuran_preview || empty($gdwpm_ukuran_preview)){
-		update_option('gdwpm_ukuran_preview', array('640', '385'));
+		update_option('gdwpm_ukuran_preview', array('600', '700', 'checked', 'manual', '600', '370'));
+	}elseif(empty($gdwpm_ukuran_preview[3]) || $gdwpm_ukuran_preview[3] == ''){
+		update_option('gdwpm_ukuran_preview', array($gdwpm_ukuran_preview[0], $gdwpm_ukuran_preview[1], 'checked', 'manual', '600', '370'));
 	}
 	$gdwpm_opsi_kategori = get_option('gdwpm_opsi_kategori_dr_folder'); 	
 	if(!$gdwpm_opsi_kategori){update_option('gdwpm_opsi_kategori_dr_folder', 'checked');}

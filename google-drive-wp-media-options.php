@@ -27,7 +27,7 @@ $gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 				</div>
 				<br />
 				<?php
-					$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');
+					$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview'); //videnable = 2, vidplay = 3, videowid = 4, vidhei = 5 
 					if(!$gdwpm_ukuran_preview || empty($gdwpm_ukuran_preview)){
 						$gdwpm_ukuran_preview = array('640', '385');
 						update_option('gdwpm_ukuran_preview', $gdwpm_ukuran_preview);
@@ -40,8 +40,28 @@ $gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 						<label for="height" style="margin-left:25px;display:inline-block;width:60px;">Height: </label>
 						<input type="number" id="gdwpm_ukuran_preview_tinggi" name="gdwpm_ukuran_preview_tinggi" min="20" step="10" value="<?php echo $gdwpm_ukuran_preview[1];?>" size="5" /><br />
 						<dfn style="margin-left:90px;display:inline-block;">*Numeric only.</dfn><br /><br />
-					the Shortcode: <code id="sotkodeprev">[gdwpm id="G.DRIVEFILEID" w="<b><?php echo $gdwpm_ukuran_preview[0];?></b>" h="<b><?php echo $gdwpm_ukuran_preview[1];?></b>"]</code>
+					the next generated Shortcode for file preview will be: <code id="sotkodeprev">[gdwpm id="G.DRIVEFILEID" w="<b><?php echo $gdwpm_ukuran_preview[0];?></b>" h="<b><?php echo $gdwpm_ukuran_preview[1];?></b>"]</code>
 					</p>
+				<p>
+					<a onclick="gdwpm_cekbok_embed_video_eksen();"><input type='checkbox' id='gdwpm_cekbok_embed_video' name='gdwpm_cekbok_embed_video' value='1' <?php echo $gdwpm_ukuran_preview[2];?> /></a> 
+					Use video player to embedding video files<br />
+				</p>
+				<div id="gdwpm_opsi_embed_video_eksen" style="margin-left:15px;display: <?php if ($gdwpm_ukuran_preview[2] == 'checked') { echo 'block;';}else{echo 'none;';}?>">
+					<p style="margin-left:25px;">
+					<dfn>This option will use the HTML <code>&lt;embed&gt;</code> element to embedding video whenever if your file was detected as video file. </dfn><br/>
+					Set predefined value for Autoplay and width / height for video player size shortcode. The default values are width = 600 px and height = 370 px.<br /><br />
+						<label for="autoplay" style="margin-left:35px;display:inline-block;width:100px;">Playing style: </label>
+						<select id="gdwpm_video_play_style"><option value="auto" <?php if($gdwpm_ukuran_preview[3] == 'auto'){echo ' selected="selected"';}?>>Auto</option><option value="manual" <?php if($gdwpm_ukuran_preview[3] == 'manual'){echo ' selected="selected"';}?>>Manual</option></select><br />
+						<label for="width" style="margin-left:35px;display:inline-block;width:100px;">Width: </label>
+						<input type="number" id="gdwpm_ukuran_video_lebar" name="gdwpm_ukuran_video_lebar" min="50" step="10" value="<?php echo $gdwpm_ukuran_preview[4];?>" size="5" /><br />
+						<label for="height" style="margin-left:35px;display:inline-block;width:100px;">Height: </label>
+						<input type="number" id="gdwpm_ukuran_video_tinggi" name="gdwpm_ukuran_video_tinggi" min="20" step="10" value="<?php echo $gdwpm_ukuran_preview[5];?>" size="5" /><br />
+						<dfn style="margin-left:145px;display:inline-block;">*Numeric only.</dfn><br /><br />
+					the next generated embedding video Shortcode: <code id="sotkodevideo">[gdwpm id="G.DRIVEFILEID" video="<b><?php echo $gdwpm_ukuran_preview[3];?></b>" w="<b><?php echo $gdwpm_ukuran_preview[4];?></b>" h="<b><?php echo $gdwpm_ukuran_preview[5];?></b>"]</code>
+					</p>
+				</div>
+				<p>
+				</p>
 				<button onclick="gdwpm_tombol_ukuran_preview_eksen();" id="gdwpm_tombol_ukuran_preview" name="gdwpm_tombol_ukuran_preview">Save</button>&nbsp;&nbsp;&nbsp; 
 					<span style="display: none" id="gdwpm_tombol_ukuran_preview_gbr">
 						<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
@@ -49,14 +69,30 @@ $gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 					<span id="gdwpm_tombol_ukuran_preview_info"></span>
 				</div>
 <script type="text/javascript">
+function gdwpm_cekbok_embed_video_eksen(){
+	if (jQuery('#gdwpm_cekbok_embed_video').prop('checked')){
+		document.getElementById("gdwpm_opsi_embed_video_eksen").style.display = "block";
+	}else{
+		document.getElementById("gdwpm_opsi_embed_video_eksen").style.display = "none";
+	}
+}
 function gdwpm_tombol_ukuran_preview_eksen(){
 		jQuery("#gdwpm_tombol_ukuran_preview_gbr").show();
 		jQuery('#gdwpm_tombol_ukuran_preview_info').empty();
+	if (jQuery('#gdwpm_cekbok_embed_video').prop('checked')){
+		var gdwpm_cekbok_video = 'checked';
+	}else{
+		var gdwpm_cekbok_video = '';
+	}
 		var data = {
 			action: 'gdwpm_on_action',
 			gdwpm_override_nonce: '<?php echo $gdwpm_override_nonce; ?>',
 			gdwpm_ukuran_preview_lebar: jQuery('#gdwpm_ukuran_preview_lebar').val() ,
-			gdwpm_ukuran_preview_tinggi: jQuery('#gdwpm_ukuran_preview_tinggi').val()
+			gdwpm_ukuran_preview_tinggi: jQuery('#gdwpm_ukuran_preview_tinggi').val(),
+			gdwpm_cekbok_embed_video: gdwpm_cekbok_video,
+			gdwpm_video_play_style: jQuery('#gdwpm_video_play_style').val(),
+			gdwpm_ukuran_video_lebar: jQuery('#gdwpm_ukuran_video_lebar').val(),
+			gdwpm_ukuran_video_tinggi: jQuery('#gdwpm_ukuran_video_tinggi').val()
 		};
 		jQuery.post(ajax_object.ajax_url, data, function(hasil) {
 			jQuery('#sotkodeprev').empty();
@@ -64,6 +100,11 @@ function gdwpm_tombol_ukuran_preview_eksen(){
 			var holder = jQuery('<div/>').html(hasil);
 			jQuery('#gdwpm_tombol_ukuran_preview_info').html(jQuery('#info', holder).html());
 			jQuery('#sotkodeprev').html(jQuery('#hasil', holder).html());
+			var hasilvid = jQuery('#hasilvid', holder).html();
+			if(hasilvid.length > 7){
+				jQuery('#sotkodevideo').empty();
+				jQuery('#sotkodevideo').html(hasilvid);
+			}
 		});
 }
 

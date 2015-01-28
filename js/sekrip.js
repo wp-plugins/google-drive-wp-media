@@ -69,7 +69,11 @@ $("#hasil").tooltip({
         }, 5000); },
     content: function(){
            var src = $(this).attr('title');
-           return '<img src="'+ src +'" />' ;
+			if(src == ''){
+				return 'No thumbnail found';
+			}else{
+				return '<img src="'+ src +'" />';
+			}
     }
 });
 	$('.sukses').show();	
@@ -157,7 +161,11 @@ $("#hasil_del").tooltip({
         }, 5000); },
     content: function(){
            var src = $(this).attr('title');
-           return '<img src="'+ src +'" />' ;
+			if(src == ''){
+				return 'No thumbnail found';
+			}else{
+				return '<img src="'+ src +'" />';
+			}
     }
 });
 	$('.sukses_del').show();
