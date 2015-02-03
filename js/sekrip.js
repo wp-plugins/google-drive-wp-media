@@ -63,10 +63,11 @@ $('#vaginasi').html($('#vaginasi', $holder).html());
 $("#hasil").tooltip({
     items: "td.kolom_file",
 	track: true,
+	position: { my: "left+15 top-5", at: "left bottom" },
 	show: { effect: 'slideDown' },
     open: function (event, ui) { setTimeout(function () {
-			$(ui.tooltip).hide('explode');
-        }, 5000); },
+			$(ui.tooltip).hide('slideUp');
+        }, 7000); },
     content: function(){
            var src = $(this).attr('title');
 			if(src == ''){
@@ -157,8 +158,8 @@ $("#hasil_del").tooltip({
 	track: true,
 	show: { effect: 'slideDown' },
     open: function (event, ui) { setTimeout(function () {
-			$(ui.tooltip).hide('explode');
-        }, 5000); },
+			$(ui.tooltip).hide('slideUp');
+        }, 7000); },
     content: function(){
            var src = $(this).attr('title');
 			if(src == ''){
@@ -211,6 +212,12 @@ $("#hasil_del").tooltip({
 		$('#vaginasi_del').buttonset({});
 	});
     }); 
+	
+	$("#gdwpm_tombol_bersih").click(function(){
+		$('#filelist').empty();	
+		$('#console').empty();
+		$(this).hide();
+	})
 	
 	$("#gdwpm_aplot_masuk").click(function(){
 //function uploadfile(){

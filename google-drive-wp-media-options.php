@@ -318,5 +318,6 @@ function gdwpm_tombol_opsi_dummy_eksen(){
         primary: "ui-icon-disk"
       }
     });
+	jQuery('input').addClass("ui-corner-all");
   });		
 </script>

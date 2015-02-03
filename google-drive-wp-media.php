@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.2.3
+Version: 2.2.4
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.2.3' );
+define( 'VERSI_GDWPM', '2.2.4' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -76,13 +76,19 @@ if($gdwpm_override_optional[0] == 'checked' && !empty($gdwpm_override_optional[1
 			$gdwpm_service_ride->setPermissions( $fileId, 'me', 'reader', 'anyone' );
 			
 			$sukinfo = '';
-			if(!empty($mime_berkas) && $gdwpm_override_optional[2] == 'checked'){
-				gdwpm_ijin_masuk_perpus($mime_berkas, $filename, $fileId, $content, $folder_ortu);
-				$sukinfo = ' and added into your Media Library';
+			if($fileId){
+				if(!empty($mime_berkas) && $gdwpm_override_optional[2] == 'checked'){
+					gdwpm_ijin_masuk_perpus($mime_berkas, $filename, $fileId, $content, $folder_ortu);
+					$sukinfo = ' and added into your Media Library';
+				}
+				echo '<div class="updated"><p>Done! <strong>'.$fileId.'</strong> successfully uploaded into <strong>'.$folder_ortu.'</strong>'.$sukinfo.'.</p></div>';
+				$fileku['error'] = 'Google Drive WP Media: This error message appear because your file has been deleted before uploading to the internal uploads folder. If you want to remove this error, just navigate to Media >> Google Drive WP Media >> Options and then uncheck the "Google Drive as Default Media Upload Storage." and save it.';
+				$fileku['name'] = $filename;
+				if(file_exists($path)){@unlink($path);}
+				return $fileku;
+			}else{
+				return $file;
 			}
-			
-			echo '<div class="updated"><p>Done! <strong>'.$fileId.'</strong> successfully uploaded into <strong>'.$folder_ortu.'</strong>'.$sukinfo.'.</p></div>';
-			exit();
 		}else{
 			return $file;
 		}
@@ -290,9 +296,16 @@ function gdwpm_sekrip_buat_mimin() {
 	wp_enqueue_script('jquery-ui-dialog');   
 	wp_enqueue_script('plupload-all');          
 	wp_enqueue_script('jquery-ui-tooltip');              
-	wp_enqueue_script('jquery-ui-tabs');        
+	wp_enqueue_script('jquery-ui-tabs');                    
+	wp_enqueue_script('jquery-ui-widget');                
+	wp_enqueue_script('jquery-effects-core');                 
+	wp_enqueue_script('jquery-effects-explode');             
 	wp_enqueue_script( 'gdwpm-ajax-script', plugins_url( '/js/sekrip.js', __FILE__ ), array('jquery'), VERSI_GDWPM, true );	
-		
+	//backwards compatible
+	if ( version_compare( get_bloginfo('version'), '4.0', '>' ) ) {          
+		wp_enqueue_script('jquery-ui-selectmenu');  
+	}
+	
 $gdwpm_opsi_kategori = get_option('gdwpm_opsi_kategori_dr_folder'); 
 	wp_localize_script( 'gdwpm-ajax-script', 'ajax_object',
             array( 'ajax_url' => admin_url( 'admin-ajax.php' ), 'opsi_kategori' => $gdwpm_opsi_kategori ) );
@@ -304,6 +317,9 @@ function gdwpm_filter_gbrurl( $url ){
 	$upload_dir = wp_upload_dir();
     if (strpos($url, 'G_D_W_P_M-file_ID/') !== false) {
 		$url = str_replace( $upload_dir['baseurl'] . '/G_D_W_P_M-file_ID/', 'https://docs.google.com/uc?id=', $url ) . '&export=view';
+		if(strpos($url, 'https://docs.google.com/uc?id=') === false){
+			$url = 'https://docs.google.com/uc?id=' . substr($url, strrpos($url, '/') + 1);
+		}
     }
 	return $url; 
 }
@@ -338,79 +354,120 @@ $gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, gdwpm_servic
 if($gdwpm_opt_akun){
 $cek_kunci = 'false';
 //$gdwpm_apiConfig['use_objects'] = true;
-$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
+if(!$gdwpm_service){ $gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] ); }
+}
+
+if (isset($_POST['repair_folder_pilian']))
+{
+	if (isset($_POST['gdwpm_folder_tools_nonce']))
+	{
+		$nonce = $_POST['gdwpm_folder_tools_nonce'];
+		if ( ! wp_verify_nonce( $nonce, 'gdwpm_folder_tools_nonce' ) ) {
+			wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+		}else{
+			$folderId = $_POST['repair_folder_pilian'];
+			$gdwpm_folder_permisi = $gdwpm_service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
+			
+			if($gdwpm_folder_permisi){
+				echo '<div class="updated"><p>Folder <strong>'.$folderId.'</strong> permissions changed.</p></div>';
+			}else{
+				echo '<div class="error"><p>Folder '.$folderId.' permissions fail to change.</p></div>';
+			}
+		}
+	}else{
+		wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>');
+	}
 }
 
 if (isset($_POST['buang_folder_pilian']))
 {
-	$gdwpm_nama_folder = $gdwpm_service->getNameFromId( $_POST['buang_folder_pilian'] );
-	$gdwpm_tong_sampah = $gdwpm_service->buangFile( $_POST['buang_folder_pilian'] );
-	if($gdwpm_tong_sampah){
-		echo '<div class="updated"><p>Folder <strong>'.$_POST['buang_folder_pilian'].' '.$gdwpm_nama_folder.'</strong> successfully deleted.</p></div>';
-		sleep(3);
+	if (isset($_POST['gdwpm_folder_tools_nonce']))
+	{
+		$nonce = $_POST['gdwpm_folder_tools_nonce'];
+		if ( ! wp_verify_nonce( $nonce, 'gdwpm_folder_tools_nonce' ) ) {
+			wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+		}else{
+			$gdwpm_nama_folder = $gdwpm_service->getNameFromId( $_POST['buang_folder_pilian'] );
+			$gdwpm_tong_sampah = $gdwpm_service->buangFile( $_POST['buang_folder_pilian'] );
+			if($gdwpm_tong_sampah){
+				echo '<div class="updated"><p>Folder <strong>'.$_POST['buang_folder_pilian'].' '.$gdwpm_nama_folder.'</strong> successfully deleted.</p></div>';
+				sleep(3);
+			}else{
+				echo '<div class="error"><p>' . $_POST['buang_folder_pilian'] . ' ' . $gdwpm_nama_folder . ' fail to delete.</p></div>';
+			}
+		}
 	}else{
-		echo '<div class="error"><p>' . $_POST['buang_folder_pilian'] . ' ' . $gdwpm_nama_folder . ' fail to delete.</p></div>';
+		wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>');
 	}
 }
 
 if (isset($_POST['gdwpm_buang_berkas_terpilih']))
 {
-	$gdwpm_info_files = '';
-	if (is_array($_POST['gdwpm_buang_berkas_terpilih'])) {
-		foreach($_POST['gdwpm_buang_berkas_terpilih'] as $value){
-			$gdwpm_berkas_terpilih_array = explode(' | ', $value); // mime, name, id, desc, folder
-			$gdwpm_tong_sampah = $gdwpm_service->buangFile( $gdwpm_berkas_terpilih_array[2] );
-			if($gdwpm_tong_sampah){
-				$gdwpm_info_files .= '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> deleted, ';
-			}else{
-				$gdwpm_info_files .= '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> failed, ';
-			}
-			//sleep(0.5);
-		}
-	} else {
-		$gdwpm_berkas_terpilih_array = explode(' | ', $_POST['gdwpm_buang_berkas_terpilih']); // mime, name, id, desc, folder
-		$gdwpm_tong_sampah = $gdwpm_service->buangFile( $gdwpm_berkas_terpilih_array[2] );
-		if($gdwpm_tong_sampah){
-			$gdwpm_info_files = '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> deleted, ';
+	if (isset($_POST['gdwpm_folder_tools_nonce']))
+	{
+		$nonce = $_POST['gdwpm_folder_tools_nonce'];
+		if ( ! wp_verify_nonce( $nonce, 'gdwpm_folder_tools_nonce' ) ) {
+			wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
 		}else{
-			$gdwpm_info_files = '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> failed, ';
+			$gdwpm_info_files = '';
+			if (is_array($_POST['gdwpm_buang_berkas_terpilih'])) {
+				foreach($_POST['gdwpm_buang_berkas_terpilih'] as $value){
+					$gdwpm_berkas_terpilih_array = explode(' | ', $value); // mime, name, id, desc, folder
+					$gdwpm_tong_sampah = $gdwpm_service->buangFile( $gdwpm_berkas_terpilih_array[2] );
+					if($gdwpm_tong_sampah){
+						$gdwpm_info_files .= '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> deleted, ';
+					}else{
+						$gdwpm_info_files .= '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> failed, ';
+					}
+					//sleep(0.5);
+				}
+			} else {
+				$gdwpm_berkas_terpilih_array = explode(' | ', $_POST['gdwpm_buang_berkas_terpilih']); // mime, name, id, desc, folder
+				$gdwpm_tong_sampah = $gdwpm_service->buangFile( $gdwpm_berkas_terpilih_array[2] );
+				if($gdwpm_tong_sampah){
+					$gdwpm_info_files = '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> deleted, ';
+				}else{
+					$gdwpm_info_files = '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> failed, ';
+				}
+			}
+			echo '<div class="updated"><p>'.$gdwpm_info_files.'.. Done!.</p></div>';
+			sleep(3);
 		}
+	}else{
+		wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>');
 	}
-    echo '<div class="updated"><p>'.$gdwpm_info_files.'.. Done!.</p></div>';
-	sleep(3);
 }
 
 if (isset($_POST['gdwpm_gawe_folder_nonce']))
 {
-		$nonce = $_POST['gdwpm_gawe_folder_nonce'];
-		if ( ! wp_verify_nonce( $nonce, 'gdwpm_gawe_folder_nonce' ) ) {
-			die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+	$nonce = $_POST['gdwpm_gawe_folder_nonce'];
+	if ( ! wp_verify_nonce( $nonce, 'gdwpm_gawe_folder_nonce' ) ) {
+		die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
 			
-		} else {
-			if (!EMPTY($_POST['gdwpm_gawe_folder']))
-			{
-				$gawe_folder = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdwpm_gawe_folder']);
-				$gawe_folder = sanitize_text_field($gawe_folder);
-				$folderId = $gdwpm_service->getFileIdByName( $gawe_folder );
+	} else {
+		if (!EMPTY($_POST['gdwpm_gawe_folder']))
+		{
+			$gawe_folder = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdwpm_gawe_folder']);
+			$gawe_folder = sanitize_text_field($gawe_folder);
+			$folderId = $gdwpm_service->createFolder( $gawe_folder );
+			$gdwpm_folder_permisi = $gdwpm_service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
 
-				if( ! $folderId ) {
-					$folderId = $gdwpm_service->createFolder( $gawe_folder );
-					$gdwpm_service->setPermissions( $folderId, $gdwpm_opt_akun[0] );
-					echo '<div class="updated"><p>Great! Folder name <strong>'.$gawe_folder.'</strong> successfully created.</p></div>';
-				}else{
-					echo '<div class="error"><p>Folder '.$gawe_folder.' already exist</p></div>';
-				}
+			if( $gdwpm_folder_permisi ) {
+				echo '<div class="updated"><p>Great! Folder name <strong>'.$gawe_folder.'</strong> successfully created.</p></div>';
 			}else{
-					echo '<div class="error"><p>Folder name cannot be empty!</p></div>';
+				echo '<div class="error"><p>Folder '.$gawe_folder.' created but permission fail to change.</p></div>';
 			}
+		}else{
+			echo '<div class="error"><p>Folder name cannot be empty!</p></div>';
 		}
+	}
 }
 
 ?>
 <script>
 jQuery(function() {
     var icons = {
-		header: "ui-icon-wrench",
+		header: "ui-icon-triangle-1-e",
 		activeHeader: "ui-icon-lightbulb"
     };
     jQuery( "#accordion" ).accordion({
@@ -513,6 +570,19 @@ div.halpager span {
 div.halpager span.active {
     background: #B6F0F6;
 }
+#pilihMaxRes { width: 110px; }
+#pilihMaxResdel { width: 140px; }
+#folder_pilian{ width: 200px; }
+  .overflowpil { max-height: 370px; }
+#folder_pilian_aplod { width: 190px; }
+  .overflowapl { max-height: 360px; }
+#buang_folder_pilian { width: 230px; }
+  .overflowbua { max-height: 300px; }
+#repair_folder_pilian { width: 230px; }
+  .overflowrep { max-height: 300px; }
+#folder_pilian_file_del { width: 220px; }
+  .overflowdel { max-height: 360px; }
+h2:before { content: ""; display: block; background: url("<?php echo plugins_url( '/images/animation/icon-32x32.png', __FILE__ );?>") no-repeat; width: 32px; height: 32px; float: left; margin: 0 6px 0 15px; }
 </style>
 <?php
 
@@ -575,28 +645,27 @@ if($cek_kunci == 'false'){ ?>
 			<li><a href="#tabs-2"><span style="float:left" class="ui-icon ui-icon-star"></span>&nbsp;Upload</a></li>
 			<li><a href="<?php echo $gdwpm_url_tab_opsi; ?>"><span style="float:left" class="ui-icon ui-icon-clipboard"></span>&nbsp;Options</a></li>
 			<li><a href="<?php echo $gdwpm_url_tab_info; ?>"><span style="float:left" class="ui-icon ui-icon-heart"></span>&nbsp;Account Information</a></li>
-			<li><a href="#tabs-5"><span style="float:left" class="ui-icon ui-icon-trash"></span>&nbsp;Removal Tool (Beta)</a></li>
+			<li><a href="#tabs-5"><span style="float:left" class="ui-icon ui-icon-gear"></span>&nbsp;Tools</a></li>
 <?php }else{ ?>
 			<li><a href="#tabs-6"><span style="float:left" class="ui-icon ui-icon-folder-collapsed"></span>&nbsp;Create Folder</a></li>
 <?php } ?>
 		</ul>
  <?php if (!empty($foldercek)) { ?>
 			<div id="tabs-1">
-				<div id="tombol-donat" class="ui-widget-content ui-corner-all" style="width:200px; float:right; padding:1em;">	
+				<div id="tombol-donat" class="ui-widget-content ui-corner-all" style="width:190px; float:right; padding:1em;">	
 					<p style="text-align: center;">Do you like this plugin?<br/>Please consider to:<br/><br/><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZZNNMX3NZM2G2" target="_blank">
 					<img src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" alt="Donate Button with Credit Cards" /></a><br/>or<br/><a href="https://wordpress.org/support/view/plugin-reviews/google-drive-wp-media?filter=5" target="_blank"><img src="<?php echo plugins_url( '/images/animation/5star-rating.png', __FILE__ );?>" alt="5 Star Rating" title="5 Star Rating" /></a><br/>Your supports help the plugin keep updated & maintained.
 					</p>	
 				</div>
-				<p>Select folder: <?php echo $folderpil; ?> <select id="pilihMaxRes">
+				<p style="display: flex; align-items: center;">Select folder: &nbsp;<?php echo $folderpil; ?>&nbsp; <select id="pilihMaxRes">
 				<?php for($i=1;$i<=10;$i++){$inum = $i * 10;?>
 				<option value="<?php echo $inum;?>"><?php echo $inum;?> items/page</option>				
 				<?php } ?>
-				</select> <button id="golek_seko_folder" name="golek_seko_folder"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
+				</select>&nbsp; <button id="golek_seko_folder" name="golek_seko_folder"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
 					<span id="gdwpm_info_folder_baru" style="display:none;">
-						You have created at least one folder.
+						There's a new folder.
 						<a href=""><button id="gdwpm_tombol_info_folder_baru" name="gdwpm_tombol_info_folder_baru"><?php _e('Reload Now') ?></button></a>
 					</span>
-				</p>
 				<?php add_thickbox(); if(!$gdwpm_ukuran_preview){$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');}?>
 				<p>
 					<span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br /><br />
@@ -604,12 +673,14 @@ if($cek_kunci == 'false'){ ?>
 						<br />
 						Shortcode with specific width & height: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>" w="<strong><?php echo $gdwpm_ukuran_preview[0];?></strong>" h="<strong><?php echo $gdwpm_ukuran_preview[1];?></strong>"]</code>
 						<br />
+						Shortcode for embed video: <code>[gdwpm id="<strong>GOOGLE-DRIVE-FILE-ID</strong>" video="<strong><?php echo $gdwpm_ukuran_preview[3];?></strong>" w="<strong><?php echo $gdwpm_ukuran_preview[4];?></strong>" h="<strong><?php echo $gdwpm_ukuran_preview[5];?></strong>"]</code>
+						<br/>
 						Link URL of your file: https://docs.google.com/uc?id=<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>&export=view <br/>
 						or you can use: https://www.googledrive.com/host/<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>
 						<br />
 						Preview: https://docs.google.com/file/d/<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>/preview
 						<br />
-						Google Docs Viewer: https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>%26export%3Dview<br/>
+						Google Docs Viewer: <br />https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>%26export%3Dview<br/>
 						* Replace <code><strong>GOOGLE-DRIVE-FILE-ID</strong></code> with your file ID. 
 						<?php
 							$ebot = $gdwpm_service->getAbout();
@@ -635,8 +706,8 @@ if($cek_kunci == 'false'){ ?>
 				</div>
 			</div>
 			<div id="tabs-2">
-				<p>
-					Select folder: <?php echo str_replace('folder_pilian', 'folder_pilian_aplod', $folderpil); ?> or create a new folder: <input type="text" id="gdwpm_folder_anyar" name="gdwpm_folder_anyar" value="" size="37" placeholder="Ignore this field if you use existing folder">
+				<p style="display: flex; align-items: center;">
+					Select folder: &nbsp;<?php echo str_replace('folder_pilian', 'folder_pilian_aplod', $folderpil); ?>&nbsp; or create a new folder: <input type="text" id="gdwpm_folder_anyar" name="gdwpm_folder_anyar" value="" size="20" title="Ignore this field if you wish to use existing folder" placeholder="*Alphanumeric only">
 				</p>
 					<!--<p>Short Description: <input type="text" name="gdwpm_aplod_deskrip" value="" size="65" placeholder="Optional"></p>-->
 				<p>
@@ -653,6 +724,8 @@ if($cek_kunci == 'false'){ ?>
 				$gdwpm_satpam_buat_nonce = wp_create_nonce( 'gdwpm_satpam_aplod_berkas' );
 				?> 
 				<ul id="filelist"></ul>
+				<br />
+				<button id="gdwpm_tombol_bersih" style="display:none;float:right;">Clear List</button>
 				<br />
 				<br />
 				<pre id="console"></pre>
@@ -677,7 +750,7 @@ if($cek_kunci == 'false'){ ?>
 	uploader.bind('FilesAdded', function(up, files) {
 		var html = '';
 		plupload.each(files, function(file) {
-			html += '<li id="' + file.id + '"><strong><font color="maroon">' + file.name + '</font></strong> (' + plupload.formatSize(file.size) + ') <b></b> <input type="text" id="' + file.id + 'gdwpm_aplod_deskrip" name="' + file.id + 'lod_deskrip" value="" size="55" placeholder="Short Description (optional) *Alphanumeric*"></li>';
+			html += '<li id="' + file.id + '"><code>' + file.name + '</code> (' + plupload.formatSize(file.size) + ') <span class="hasilprog"></span> <input type="text" id="' + file.id + 'gdwpm_aplod_deskrip" name="' + file.id + 'lod_deskrip" value="" size="55" placeholder="Short Description (optional) *Alphanumeric*"><hr></li>';
 		});
 		
 		document.getElementById('filelist').innerHTML += html;
@@ -686,11 +759,12 @@ if($cek_kunci == 'false'){ ?>
 	});
  
 	uploader.bind('UploadProgress', function(up, file) {
-		document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span><font color="blue">' + file.percent + "%</font></b>  " +  jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val().replace(/[^\w\s-]/gi, '') + "<b></span><hr>";
+		document.getElementById(file.id).getElementsByClassName('hasilprog')[0].innerHTML = "<dfn>" + file.percent + "%</dfn> <samp>" +  jQuery('#' + file.id + 'gdwpm_aplod_deskrip').val().replace(/[^\w\s-]/gi, '') + "</samp>";
 		
 		jQuery('#' + file.id + 'gdwpm_aplod_deskrip').hide();
 		jQuery('#gdwpm_upload_container').hide();
 		jQuery('#gdwpm_loding_128').show();
+		jQuery('#gdwpm_tombol_bersih').hide();
 	});
  
 	uploader.bind('Error', function(up, err) {
@@ -709,7 +783,12 @@ if($cek_kunci == 'false'){ ?>
         response=response["response"];
 		jQuery('#console').html(response);
 		
-		jQuery('#gdwpm_upload_container').show();
+		var totalspan = document.getElementById('filelist').getElementsByClassName('hasilprog').length;
+		var totaldfn = document.getElementById('filelist').getElementsByTagName('dfn').length;
+		if(totalspan == totaldfn){
+			jQuery('#gdwpm_upload_container').show();
+			jQuery('#gdwpm_tombol_bersih').show();
+		}
 		jQuery('#gdwpm_loding_128').hide();
 		jQuery('#gdwpm_start-upload').hide();
 		
@@ -737,6 +816,24 @@ if($cek_kunci == 'false'){ ?>
 			<!-- tabs-3 ajax -->
 			<!-- tabs-4 ajax -->
 			<div id="tabs-5">
+			<?php $gdwpm_folder_tools_nonce = wp_create_nonce( "gdwpm_folder_tools_nonce" ); ?>
+				<div id="gdwpm_repair_folder" class="ui-widget-content ui-corner-all " style="padding:1em;">	
+				<div class="ui-corner-all ui-widget-header" style="padding:0.5em;text-align:center;">Repair Folder
+				</div>
+				<form id="gdwpm_form_repair_folder" name="gdwpm_form_repair_folder" method="post">
+				<p style="margin-left:7px;">
+					<dfn>If you found that your folder was listed here, but not in your Google Drive "Incoming" area. <br/>
+					Then, this tool will fix your hidden folder by change its permissions.</dfn>
+				</p><br/>
+					<input type="hidden" name="gdwpm_folder_tools_nonce" value="<?php echo $gdwpm_folder_tools_nonce;?>">
+					<p style="margin-left:17px;display: flex; align-items: center;">Select folder: &nbsp;<?php echo str_replace('folder_pilian', 'repair_folder_pilian', $folderpil); ?> &nbsp;<button id="gdwpm_tombol_repair_folder" name="gdwpm_tombol_repair_folder"><?php _e('Fix Now!') ?></button> &nbsp;&nbsp;
+				</p>
+				</form>
+				</div>
+				<br/>
+				<div class="ui-widget-content ui-corner-all" style="padding:1em;">		
+				<div class="ui-corner-all ui-widget-header" style="padding:0.5em;text-align:center;">Delete Folder and Files
+				</div>
 				<p>What do you want to do?</p>
 				 <p style="margin-left:17px;"><a onclick="gdwpm_cekbok_opsi_buang_folder_eksen();"><input type='radio' name='gdwpm_cekbok_opsi_buang_folder' value='1' /></a> 
 					Delete folder</p>
@@ -744,17 +841,22 @@ if($cek_kunci == 'false'){ ?>
 					Delete files</p>
 				<br />
 				<div id="gdwpm_kotak_buang_folder" class="ui-widget-content ui-corner-all" style="padding:1em;display:none;">	
+				<div class="ui-corner-all ui-widget-header" style="padding:0.5em;text-align:center;">Delete Folder
+				</div>
 				<form id="gdwpm_form_buang_folder" name="gdwpm_form_buang_folder" method="post">
-					<p>Select folder to delete: <?php echo str_replace('folder_pilian', 'buang_folder_pilian', $folderpil); ?> <button id="gdwpm_buang_folder" name="gdwpm_buang_folder"><?php _e('Delete Now') ?></button> &nbsp;&nbsp;
+					<input type="hidden" name="gdwpm_folder_tools_nonce" value="<?php echo $gdwpm_folder_tools_nonce;?>">
+					<p style="display: flex; align-items: center;">Select folder to delete: &nbsp;<?php echo str_replace('folder_pilian', 'buang_folder_pilian', $folderpil); ?> &nbsp;<button id="gdwpm_buang_folder" name="gdwpm_buang_folder"><?php _e('Delete Now') ?></button> &nbsp;&nbsp;
 						</form>
 					</p>
 				</div>
-				<div id="gdwpm_kotak_buang_file" class="ui-widget-content ui-corner-all" style="padding:1em;display:none;">					
-				<p>Select folder: <?php echo str_replace('folder_pilian', 'folder_pilian_file_del', $folderpil); ?> <select id="pilihMaxResdel">
+				<div id="gdwpm_kotak_buang_file" class="ui-widget-content ui-corner-all" style="padding:1em;display:none;">		
+				<div class="ui-corner-all ui-widget-header" style="padding:0.5em;text-align:center;">Delete Files
+				</div>				
+				<p style="display: flex; align-items: center;">Select folder: &nbsp;<?php echo str_replace('folder_pilian', 'folder_pilian_file_del', $folderpil); ?> &nbsp;<select id="pilihMaxResdel">
 				<?php for($i=1;$i<=10;$i++){$inum = $i * 10;?>
 				<option value="<?php echo $inum;?>"><?php echo $inum;?> items/page</option>				
 				<?php } ?>
-				</select> <button id="gdwpm_file_dr_folder" name="gdwpm_file_dr_folder"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
+				</select> &nbsp;<button id="gdwpm_file_dr_folder" name="gdwpm_file_dr_folder"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
 					
 				<p>
 					<span class="sukses_del">Please select folder and click Get Files, to show all files belongs to it.
@@ -765,12 +867,13 @@ if($cek_kunci == 'false'){ ?>
 				  <center><img src="<?php echo plugins_url( '/images/animation/ajax_loader_blue_256.gif', __FILE__ );?>" /><br />Please wait...</center>
 				</div>
 				<form id="gdwpm_form_buang_berkas" name="gdwpm_form_buang_berkas" method="post">	
-				<div id="hasil_del"></div>
-				<div style="display: none" id="gdwpm_info_del"><p>Selected file(s) will be permanently deleted. Are you ready?</p>
-					<p>
-						<button id="gdwpm_berkas_buang" name="gdwpm_berkas_buang">Delete Selected</button>
-					</p>
-				</div>
+					<input type="hidden" name="gdwpm_folder_tools_nonce" value="<?php echo $gdwpm_folder_tools_nonce;?>">
+					<div id="hasil_del"></div>
+					<div style="display: none" id="gdwpm_info_del"><p>Selected file(s) will be permanently deleted. Are you ready?</p>
+						<p>
+							<button id="gdwpm_berkas_buang" name="gdwpm_berkas_buang">Delete Selected</button>
+						</p>
+					</div>
 				</form>
 				<div id="vaginasi_del" style="text-align:center;margin-top:25px;"></div>
 				</div>
@@ -792,6 +895,7 @@ if($cek_kunci == 'false'){ ?>
     All selected files will be permanently deleted and cannot be recovered.
   </p>
 </div>
+			</div>
 			</div>
 <script>
 function gdwpm_cekbok_opsi_buang_folder_eksen(){
@@ -845,13 +949,15 @@ jQuery(function(){
             jQuery('#dialog-buang-berkas').dialog('open');
         });
 });
-
 </script>
 <?php }else{ ?>
 			<div id="tabs-6">
 				<p>
-					No folder exist/detected in the "Incoming" or "Shared with me" view in your Google Drive.<br/>
-					For more info about "Incoming" or “Shared with me”, please visit <a href="https://support.google.com/drive/answer/2375057?hl=en" target="_blank">https://support.google.com/drive/answer/2375057?hl=en</a>.
+					There's no folder exist/detected in the "Incoming" or "Shared with me" area in your Google Drive.<br/>
+					For more info about "Incoming" or "Shared with me", please visit <dfn>https://support.google.com/drive/answer/2375057?hl=en</dfn>.
+				</p>
+				<p>
+					Once the folder created, your folder will be listed in the "Incoming" or "Shared with me" area <dfn>https://drive.google.com/drive/#incoming</dfn>.
 				</p>
 				<p>
 					This plugin requires at least 1 folder to store your files.
@@ -889,7 +995,7 @@ jQuery(function(){
 						</td>
 						<td>: </td>
 						<td>
-							<input type="text" name="gdwpm_imel" value="<?php echo $gdwpm_opt_akun[0];?>"  title="Use this Email to share with. eg: youremail@gmail.com" size="35">
+							<input type="text" name="gdwpm_imel" value="<?php echo $gdwpm_opt_akun[0];?>"  title="Use this Email to share with. eg: youremail@gmail.com" size="25">
 						</td>
 					</tr>
 					<tr>
@@ -898,7 +1004,7 @@ jQuery(function(){
 						</td>
 						<td>: </td>
 						<td>
-							<input type="text" name="gdwpm_klaen_aidi" value="<?php echo $gdwpm_opt_akun[1];?>"  title="eg: 123456789.apps.googleusercontent.com" size="55">
+							<input type="text" name="gdwpm_klaen_aidi" value="<?php echo $gdwpm_opt_akun[1];?>"  title="eg: 123456789.apps.googleusercontent.com" size="45">
 						</td>
 					</tr>
 					<tr>
@@ -907,7 +1013,7 @@ jQuery(function(){
 						</td>
 						<td>: </td>
 						<td>
-							<input type="text" name="gdwpm_nama_service" value="<?php echo $gdwpm_opt_akun[2];?>"  title="eg: 123456789@developer.gserviceaccount.com" size="55">
+							<input type="text" name="gdwpm_nama_service" value="<?php echo $gdwpm_opt_akun[2];?>"  title="eg: 123456789@developer.gserviceaccount.com" size="45">
 						</td>
 					</tr>
 					<tr>
@@ -916,7 +1022,7 @@ jQuery(function(){
 						</td>
 						<td>: </td>
 						<td>
-							<input type="text" name="gdwpm_kunci_rhs" value="<?php echo $gdwpm_opt_akun[3];?>"  title="eg: http://yourdomain.com/path/to/123xxx-privatekey.p12" size="75">
+							<input type="text" name="gdwpm_kunci_rhs" value="<?php echo $gdwpm_opt_akun[3];?>"  title="eg: http://yourdomain.com/path/to/123xxx-privatekey.p12" size="65">
 						</td>
 					</tr>
 				</table>
@@ -1088,6 +1194,13 @@ jQuery(function(){
       }
     })
 	
+    jQuery( "#gdwpm_tombol_bersih" )
+      .button({
+      icons: {
+        primary: "ui-icon-grip-dotted-horizontal"
+      }
+    })
+	
     jQuery( "#gdwpm_tombol_upload" )
       .button({
       icons: {
@@ -1107,8 +1220,41 @@ jQuery(function(){
       icons: {
         primary: "ui-icon-folder-collapsed"
       }
+    })  
+    jQuery( "#gdwpm_tombol_repair_folder" )
+      .button({
+      icons: {
+        primary: "ui-icon-wrench"
+      }
     })
-		
+<?php if ( version_compare( get_bloginfo('version'), '4.0', '>' ) ) { ?>		
+	jQuery( "#pilihMaxRes" )
+	  .selectmenu();
+	jQuery( "#pilihMaxResdel" )
+	  .selectmenu();
+	  
+	jQuery( "#folder_pilian" )
+	  .selectmenu()
+	  .selectmenu( "menuWidget" )
+		.addClass( "overflowpil" );
+	jQuery( "#folder_pilian_aplod" )
+	  .selectmenu()
+	  .selectmenu( "menuWidget" )
+		.addClass( "overflowapl" );
+	jQuery( "#buang_folder_pilian" )
+	  .selectmenu()
+	  .selectmenu( "menuWidget" )
+		.addClass( "overflowbua" );
+	jQuery( "#repair_folder_pilian" )
+	  .selectmenu()
+	  .selectmenu( "menuWidget" )
+		.addClass( "overflowrep" );
+	jQuery( "#folder_pilian_file_del" )
+	  .selectmenu()
+	  .selectmenu( "menuWidget" )
+		.addClass( "overflowdel" );
+<?php } ?>
+	jQuery('input').addClass("ui-corner-all");
   });
 </script>
 <?php
@@ -1176,7 +1322,7 @@ function gdwpm_action_callback() {
 			$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
 		}
 		
-		echo '<div class="sukses"><p>Folder ID: <strong>'.$fld.'</strong> and items on current page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/sheet</option><option value="10" selected="selected">10 rows/sheet</option>   <option value="15">15 rows/sheet</option><option value="20">20 rows/sheet</option><option value="25">25 rows/sheet</option><option value="30">30 rows/sheet</option><option value="40">40 rows/sheet</option><option value="50">50 rows/sheet</option></select></p></div>';
+		echo '<div class="sukses"><p>Folder ID: <strong>'.$fld.'</strong> and items on page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/sheet</option><option value="10" selected="selected">10 rows/sheet</option>   <option value="15">15 rows/sheet</option><option value="20">20 rows/sheet</option><option value="25">25 rows/sheet</option><option value="30">30 rows/sheet</option><option value="40">40 rows/sheet</option><option value="50">50 rows/sheet</option></select></p></div>';
 			
 		echo $daftar_berkas[0];
 		
@@ -1195,7 +1341,7 @@ function gdwpm_action_callback() {
 		if($i <= 0){
 			$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
 		}
-		echo '<div class="sukses_del"><p>Folder ID: <strong>'.$fld.'</strong> and items on current page: <strong>'.$i.'</strong>.</p></div>';
+		echo '<div class="sukses_del"><p>Folder ID: <strong>'.$fld.'</strong> and items on page: <strong>'.$i.'</strong>.</p></div>';
 		//$daftarfile = str_replace('radio', 'checkbox', $daftarfile);
 		//$daftarfile = str_replace('<div id="hasil">', '<div id="hasil_del">', $daftarfile);
 		echo $daftarfile;
@@ -1521,7 +1667,7 @@ class GDWPMBantuan {
                 $perm->setType( $type );
                 $perm->setRole( $role );
                 
-                $this->_service->permissions->insert($fileId, $perm);
+                return $this->_service->permissions->insert($fileId, $perm);
         }
         
         public function getFileIdByName( $name ) {
@@ -1568,16 +1714,20 @@ class GDWPMBantuan {
 				do {
 					$haldepan++;
 					try {
+						if($haldepan == 1){$pageToken = '';}  //halman prtama pokoke token kudu kosong
 						$parameters['pageToken'] = $pageToken;
 						$children = $this->_service->children->listChildren($folderId, $parameters);
 						$pageToken = $children->getNextPageToken();
 						if($pageToken){
 							//$hal .= '&nbsp;<button id="halaman" value="'.$pageToken.'">'.$haldepan.'</button>';
 							$halarr[$haldepan] = $pageToken;
+							if($haldepan % 10 == 0){sleep(1);}
 						}
 					} catch (Exception $e) {
-					  $errormes = "<kbd>An error occurred: " . $e->getMessage() . "</kbd>";
-					  $pageToken = NULL;
+						$errormes = "<kbd>An error occurred: " . $e->getMessage() . "</kbd>";
+						$haldepan -= 1;
+						$pageToken = $halarr[$haldepan]; //NULL;
+						sleep(1);
 					}
 				} while ($pageToken);
 				unset($parameters['pageToken']);
@@ -1622,6 +1772,7 @@ class GDWPMBantuan {
 					$children = $this->_service->children->listChildren($folderId, $parameters);
 					foreach ($children->getItems() as $child) {
 						$i++; if($i == 1 && $in_type == 'radio'){$checked = 'checked';}else{$checked = '';}
+						if($maxResults != $i && $maxResults > 30 && $i % 20 == 0){sleep(1);}
 						$fileId = $child->getId(); 
 						$file = $this->_service->files->get($fileId); //getDescription getMimeType
 						$file_mime = $file->getMimeType();
@@ -1632,7 +1783,7 @@ class GDWPMBantuan {
 						$file_size = size_format($file->getFileSize(), 2);
 						$file_thumb = $file->getThumbnailLink();	// str_replace('=s220', '=s300', $file->getThumbnailLink());		
 						$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=download" title="Open link in a new window" target="_blank" class="tabeksen">Download</a>';
-						if(strpos($file_mime, 'image') !== false){$view = '<a href="https://docs.google.com/uc?id='.$fileId.'&export=view" title="Open link in a new window" target="_blank" class="tabeksen">View</a>';}
+						if(strpos($file_mime, 'image') !== false){$view = '<a href="https://www.googledrive.com/host/'.$fileId.'" title="Open link in a new window" target="_blank" class="tabeksen">View</a>';}
 						$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.$file_mime.' | '.$file_title.' | '.$fileId.' | '.$file_desc.' | '.$folder_name.'" ' . $checked . '></td><td class="kolom_file" title="' . $file_thumb . '">'.$fileId.'</td>';
 						$daftarfile .=  '<td title="' . $file_desc . '"><img src="' . $file_icon . '" title="' . $file_mime . '"> ' . $file_title . '</td>';
 						$daftarfile .=  '<!--<td>' . $file_desc . '</td>-->';
