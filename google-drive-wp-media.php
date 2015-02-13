@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.2.5
+Version: 2.2.6
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.2.5' );
+define( 'VERSI_GDWPM', '2.2.6' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -771,7 +771,13 @@ if($cek_kunci == 'false'){ ?>
 				</p>
 				
 <?php
-			if(!$gdwpm_opsi_chunk){$gdwpm_opsi_chunk = get_option('gdwpm_opsi_chunk');}
+			if(!$gdwpm_opsi_chunk){
+				$gdwpm_opsi_chunk = get_option('gdwpm_opsi_chunk');
+				if(!$gdwpm_opsi_chunk || empty($gdwpm_opsi_chunk)){
+					$gdwpm_opsi_chunk = array('local' => array('cekbok' => 'checked', 'chunk' => '700', 'retries' => '3'), 'drive' => array('cekbok' => 'checked', 'chunk' => '2', 'retries' => '3'));
+					update_option('gdwpm_opsi_chunk', $gdwpm_opsi_chunk);
+				}
+			}
 			$gdwpm_satpam_buat_nonce = wp_create_nonce( 'gdwpm_satpam_aplod_berkas' );
 				?> 
 				<ul id="filelist"></ul>
