@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.2.6
+Version: 2.2.7
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.2.6' );
+define( 'VERSI_GDWPM', '2.2.7' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -1399,13 +1399,18 @@ function gdwpm_action_callback() {
 			$daftar_berkas = $gdwpm_service->getFilesInFolder($fld, $_POST['pilmaxres']);
 		}
 		
-		if($daftar_berkas[1] <= 0){
+		if($daftar_berkas[1] <= 0){ // total files < 1
 			//$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
-			echo '<div class="sukses"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>Your request contains multiple pages, click the page number below.</p></div>';
+			if($daftar_berkas[2] > 1){ // total halaman > 1
+				echo '<div class="sukses"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>Your request contains multiple pages, click the page number below.</p></div>';	
+				echo $daftar_berkas[0];
+			}else{
+				echo '<div class="sukses"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>This folder is empty.</p></div>';
+			}
 		}else{		
-			echo '<div class="sukses"><p>Folder ID: <strong>'.$fld.'</strong> and items on page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/sheet</option><option value="10" selected="selected">10 rows/sheet</option>   <option value="15">15 rows/sheet</option><option value="20">20 rows/sheet</option><option value="25">25 rows/sheet</option><option value="30">30 rows/sheet</option><option value="40">40 rows/sheet</option><option value="50">50 rows/sheet</option></select></p></div>';
-		}			
-		echo $daftar_berkas[0];
+			echo '<div class="sukses"><p>Folder ID: <strong>'.$fld.'</strong> and items on page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/sheet</option><option value="10" selected="selected">10 rows/sheet</option>   <option value="15">15 rows/sheet</option><option value="20">20 rows/sheet</option><option value="25">25 rows/sheet</option><option value="30">30 rows/sheet</option><option value="40">40 rows/sheet</option><option value="50">50 rows/sheet</option></select></p></div>';	
+			echo $daftar_berkas[0];
+		}		
 	}elseif(isset($_POST['folder_pilian_file_del'])){
 	$gdwpm_apiConfig['use_objects'] = true;
 	$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
@@ -1420,11 +1425,16 @@ function gdwpm_action_callback() {
 		
 		if($daftar_berkas[1] <= 0){
 			//$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
-			echo '<div class="sukses_del"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>Your request contains multiple pages, click the page number below.</p></div>';
+			if($daftar_berkas[2] > 1){ // total halaman > 1
+				echo '<div class="sukses_del"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>Your request contains multiple pages, click the page number below.</p></div>';
+				echo $daftarfile;
+			}else{
+				echo '<div class="sukses_del"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>This folder is empty.</p></div>';
+			}
 		}else{		
 			echo '<div class="sukses_del"><p>Folder ID: <strong>'.$fld.'</strong> and items on page: <strong>'.$i.'</strong>.</p></div>';
+			echo $daftarfile;
 		}			
-		echo $daftarfile;
 		
 	}elseif(isset($_POST['masuk_perpus'])){
 		$gdwpm_berkas_terpilih_arr = explode(' | ', $_POST['masuk_perpus']);
@@ -2000,7 +2010,7 @@ class GDWPMBantuan {
 							
 			$vaginasi =	'<div id="'.$div_pagi.'">'.$halsiap.'</div>';
 			$daftarfile .= $vaginasi;
-			return array($daftarfile, $i);//, $halterlihat, $totalhal);//items, items onpage, currentpage, totalpage
+			return array($daftarfile, $i, $totalhal);//, $halterlihat, $totalhal);//items, items onpage, currentpage, totalpage
 		}
 		
 }
