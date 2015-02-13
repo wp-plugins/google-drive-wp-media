@@ -4,7 +4,7 @@ Donate link: http://www.mochamir.com/
 Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
 Requires at least: 3.5
 Tested up to: 4.1
-Stable tag: 2.2.4
+Stable tag: 2.2.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,6 +14,8 @@ WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publi
 
 Google Drive on Wordpress Media Publishing. Direct access to your Google Drive, allows you to manage your files remotely from your WordPress blog.
 Upload and share your files directly from your WordPress blog to Google Drive.
+
+New: Auto create thumbnails and Chunking Option available, just navigate to the Options page and customize your settings to help suit your needs.
 
 Features:
 
@@ -62,13 +64,13 @@ to insert or move existing files
 note: your files must be set to public to allows anyone to view or download your files.
 
 = Can you tell me why I can't see the files or folders in my google drive that supposedly are uploading to my drive? =
-All uploaded files will listed in "Shared with Me" view https://drive.google.com/?authuser=0#shared-with-me
+All uploaded files will listed in "Shared with Me" view https://drive.google.com/?authuser=0#shared-with-me (classic Google Drive) or "Incoming" area https://drive.google.com/drive/#incoming (new Google Drive).
 
 = How to displaying images in thumbnail size in the gallery? =
-Click the "Options" tab and check the "Enable Dummy Image URL".
+Click the "Options" tab and enable the "Auto create Thumbnails" option.
 
 = I got a problem and the message is "An error occurred: Unable to parse the p12 file. Is this a .p12 file? Is the password correct? OpenSSL error:". what I missed? =
-The error reported that was 'Unable to parse the p12 file', have you write the correct url path of p12 file.? can you access or download it via web browser? in addition if your domain setting use non-www or www only, then you have to add/remove www in url path.
+The error reported that was 'Unable to parse the p12 file', have you write the correct url path of p12 file.? can you access or download it via web browser? in addition if your domain setting use non-www or www only, then you have to add/remove www in url path. If the problem still exists, just upload your p12 file to your Google Drive and change the sharing setting set to public.
 
 = I got a problem and the message is "An error occurred: Error refreshing the OAuth2 token, message: '{ "error" : "invalid_grant" }'". what I missed? =
 There's something wrong (typo or something) w/ your Service Account Name setting. Please make sure, there's no white space in the form fields. especially Service Account Name field or create New Client ID.
@@ -77,6 +79,14 @@ There's something wrong (typo or something) w/ your Service Account Name setting
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 2.2.5 =
+
+* Option Auto Create Thumbnails added
+* Image Url changed
+* Google Drive upload type changed to Resumable Upload protocol
+* Split request into items and pages
+* Chunking settings added
 
 = 2.2.4 =
 

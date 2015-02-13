@@ -7,6 +7,9 @@ if ( !is_admin() ) {
 }
 $gdwpm_opsi_kategori = get_option('gdwpm_opsi_kategori_dr_folder'); 
 $gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
+$gdwpm_opsi_thumbs = get_option('gdwpm_img_thumbs');
+if(!$gdwpm_opsi_thumbs){$gdwpm_opsi_thumbs = array('', '', '150', '150', 'false');}
+$gdwpm_opsi_chunk = get_option('gdwpm_opsi_chunk');
 ?>
 				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
 				<form id="gdwpm_form_opsi_kategori" name="gdwpm_form_opsi_kategori" method="post">
@@ -36,9 +39,9 @@ $gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
 					<p>Set predefined size for width and height of Google Drive single file preview shortcode. The default values are width = 640 px and height = 385 px.<br /><br />
 						<label for="width" style="margin-left:25px;display:inline-block;width:60px;">Width: </label>
-						<input type="number" id="gdwpm_ukuran_preview_lebar" name="gdwpm_ukuran_preview_lebar" min="50" step="10" value="<?php echo $gdwpm_ukuran_preview[0];?>" size="5" /><br />
+						<input type="number" id="gdwpm_ukuran_preview_lebar" name="gdwpm_ukuran_preview_lebar" min="50" max="9999" step="10" value="<?php echo $gdwpm_ukuran_preview[0];?>" size="5" /> px <small>(Pixel)</small><br />
 						<label for="height" style="margin-left:25px;display:inline-block;width:60px;">Height: </label>
-						<input type="number" id="gdwpm_ukuran_preview_tinggi" name="gdwpm_ukuran_preview_tinggi" min="20" step="10" value="<?php echo $gdwpm_ukuran_preview[1];?>" size="5" /><br />
+						<input type="number" id="gdwpm_ukuran_preview_tinggi" name="gdwpm_ukuran_preview_tinggi" min="20" max="9999" step="10" value="<?php echo $gdwpm_ukuran_preview[1];?>" size="5" /> px <small>(Pixel)</small><br />
 						<dfn style="margin-left:90px;display:inline-block;">*Numeric only.</dfn><br /><br />
 					the next generated Shortcode for file preview will be: <code id="sotkodeprev">[gdwpm id="G.DRIVEFILEID" w="<b><?php echo $gdwpm_ukuran_preview[0];?></b>" h="<b><?php echo $gdwpm_ukuran_preview[1];?></b>"]</code>
 					</p>
@@ -51,11 +54,11 @@ $gdwpm_override_nonce = wp_create_nonce( "gdwpm_override_dir" );
 					<dfn>This option will use the HTML <code>&lt;embed&gt;</code> element to embedding video whenever if your file was detected as video file. </dfn><br/>
 					Set predefined value for Autoplay and width / height for video player size shortcode. The default values are width = 600 px and height = 370 px.<br /><br />
 						<label for="autoplay" style="margin-left:35px;display:inline-block;width:100px;">Playing style: </label>
-						<select id="gdwpm_video_play_style"><option value="auto" <?php if($gdwpm_ukuran_preview[3] == 'auto'){echo ' selected="selected"';}?>>Auto</option><option value="manual" <?php if($gdwpm_ukuran_preview[3] == 'manual'){echo ' selected="selected"';}?>>Manual</option></select><br />
+						<select id="gdwpm_video_play_style" name="gdwpm_video_play_style"><option value="auto" <?php if($gdwpm_ukuran_preview[3] == 'auto'){echo ' selected="selected"';}?>>Auto</option><option value="manual" <?php if($gdwpm_ukuran_preview[3] == 'manual'){echo ' selected="selected"';}?>>Manual</option></select><br />
 						<label for="width" style="margin-left:35px;display:inline-block;width:100px;">Width: </label>
-						<input type="number" id="gdwpm_ukuran_video_lebar" name="gdwpm_ukuran_video_lebar" min="50" step="10" value="<?php echo $gdwpm_ukuran_preview[4];?>" size="5" /><br />
+						<input type="number" id="gdwpm_ukuran_video_lebar" name="gdwpm_ukuran_video_lebar" min="50" max="1000" step="10" value="<?php echo $gdwpm_ukuran_preview[4];?>" size="5" /> px <small>(Pixel)</small><br />
 						<label for="height" style="margin-left:35px;display:inline-block;width:100px;">Height: </label>
-						<input type="number" id="gdwpm_ukuran_video_tinggi" name="gdwpm_ukuran_video_tinggi" min="20" step="10" value="<?php echo $gdwpm_ukuran_preview[5];?>" size="5" /><br />
+						<input type="number" id="gdwpm_ukuran_video_tinggi" name="gdwpm_ukuran_video_tinggi" min="20" max="1000" step="10" value="<?php echo $gdwpm_ukuran_preview[5];?>" size="5" /> px <small>(Pixel)</small><br />
 						<dfn style="margin-left:145px;display:inline-block;">*Numeric only.</dfn><br /><br />
 					the next generated embedding video Shortcode: <code id="sotkodevideo">[gdwpm id="G.DRIVEFILEID" video="<b><?php echo $gdwpm_ukuran_preview[3];?></b>" w="<b><?php echo $gdwpm_ukuran_preview[4];?></b>" h="<b><?php echo $gdwpm_ukuran_preview[5];?></b>"]</code>
 					</p>
@@ -110,13 +113,66 @@ function gdwpm_tombol_ukuran_preview_eksen(){
 
 </script>
 				<br />
+				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
+				<form id="gdwpm_form_opsi_thumbs" name="gdwpm_form_opsi_thumbs" method="post">
+				<p>
+					<a onclick="gdwpm_cekbok_opsi_thumbs_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_thumbs' name='gdwpm_cekbok_opsi_thumbs' value='1' <?php echo $gdwpm_opsi_thumbs[0];?> /></a> 
+					Auto Create Thumbnails<br />
+					&nbsp;<dfn>This option will create image thumbnail (not Google Drive file thumbnail) and the thumbnail data (file ID, image width, and image height) will be saved in the Google Drive file properties of the original image. All Thumbnails will be saved in the "gdwpm-thumbnails" folder.</dfn>
+					<input type="hidden" name="gdwpm_opsi_thumbs_nonce" value="<?php echo wp_create_nonce( "gdwpm_thumbs_nonce" );?>">
+				<p>
+				<div id="gdwpm_opsi_thumbs_eksen" style="margin-left:15px;display: <?php if ($gdwpm_opsi_thumbs[0] == 'checked') { echo 'block;';}else{echo 'none;';}?>">
+					<p>				
+					<label for="thumbs_width" style="margin-left:25px;display:inline-block;width:77px;">Max Width: </label>
+						<input type="number" id="gdwpm_thumbs_width" name="gdwpm_thumbs_width" min="50" max="300" step="5" value="<?php echo $gdwpm_opsi_thumbs[2];?>" size="3" /> px <small>(Pixel)</small><br />
+					<label for="thumbs_height" style="margin-left:25px;display:inline-block;width:77px;">Max Height: </label>
+						<input type="number" id="gdwpm_thumbs_height" name="gdwpm_thumbs_height" min="50" max="300" step="5" value="<?php echo $gdwpm_opsi_thumbs[3];?>" size="3" /> px <small>(Pixel)</small><br />
+						<dfn style="margin-left:107px;display:inline-block;">*Numeric only.</dfn><br />
+					<label for="thumbs_crop" style="margin-left:25px;display:inline-block;width:77px;">Crop: </label>
+						<select name="gdwpm_thumbs_crop" id="gdwpm_thumbs_crop"><option value="true" <?php if($gdwpm_opsi_thumbs[4] == 'true'){echo ' selected="selected"';}?>>Yes</option><option value="false" <?php if($gdwpm_opsi_thumbs[4] == 'false'){echo ' selected="selected"';}?>>No</option></select><br />
+						<small>Note: if you change the API Key settings, this option will be reset automatically. <br/>For references: Your Media Settings (Settings >> Media) for Thumbnail size are Width: <?php echo get_option('thumbnail_size_w'); ?>, Height: <?php echo get_option('thumbnail_size_h'); ?>, & Crop: <?php if(get_option('thumbnail_crop')){echo 'Yes';}else{echo 'No';} ?>.</small>					
+					</p>
+				</div>
+				<button id="gdwpm_tombol_opsi_thumbs" name="gdwpm_tombol_opsi_thumbs">Save & Reload</button>
+				</form>
+				</div>
+				<br />
+				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
+				<form id="gdwpm_form_opsi_chunkpl" name="gdwpm_form_opsi_chunkpl" method="post">
+				<p>Google Drive Chunking Settings:<br/>					
+					<label for="drivechunk_size" style="margin-left:25px;display:inline-block;width:85px;">Chunk Size: </label>
+						<input type="number" id="gdwpm_drive_chunk_size" name="gdwpm_drive_chunk_size" min="1" max="99" step="1" value="<?php echo $gdwpm_opsi_chunk['drive']['chunk'];?>" size="2" /> MB <small>(Megabyte)</small><br />
+					<label for="drivemax_retries" style="margin-left:25px;display:inline-block;width:85px;">Max Retries: </label>
+						<input type="number" id="gdwpm_drive_chunk_retries" name="gdwpm_drive_chunk_retries" min="3" max="9" step="1" value="<?php echo $gdwpm_opsi_chunk['drive']['retries'];?>" size="2" /><br />
+						<dfn style="margin-left:120px;display:inline-block;">*Numeric only.</dfn><br />
+				</p>
+				<p>
+					<a onclick="gdwpm_cekbok_opsi_chunkpl_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_chunkpl' name='gdwpm_cekbok_opsi_chunkpl' value='1' <?php echo $gdwpm_opsi_chunk['local']['cekbok'];?> /></a> 
+					Enable chunking Local Server<br />
+					&nbsp;<dfn>This option will split your file into chunks and upload these chunks to your local server and rejoin them back one by one. If uploads fail, it will retry to uploading the file starting with the last failed chunk. Once it's done, the current file will be chunked again and sending them to your Google Drive piece by piece. This temporary file automatically will be removed from your server. </dfn>
+					<input type="hidden" name="gdwpm_opsi_chunkpl_nonce" value="<?php echo wp_create_nonce( "gdwpm_chunkpl_nonce" );?>">
+				<p>
+				<div id="gdwpm_folder_opsi_chunkpl_eksen" style="margin-left:15px;display: <?php if ($gdwpm_opsi_chunk['local']['cekbok'] == 'checked') { echo 'block;';}else{echo 'none;';}?>">
+					<p>				
+					<label for="localchunk_size" style="margin-left:25px;display:inline-block;width:85px;">Chunk Size: </label>
+						<input type="number" id="gdwpm_local_chunk_size" name="gdwpm_local_chunk_size" min="50" max="9999" step="10" value="<?php echo $gdwpm_opsi_chunk['local']['chunk'];?>" size="4" /> kB <small>(Kilobyte)</small><br />
+					<label for="localmax_retries" style="margin-left:25px;display:inline-block;width:85px;">Max Retries: </label>
+						<input type="number" id="gdwpm_local_chunk_retries" name="gdwpm_local_chunk_retries" min="1" max="9" step="1" value="<?php echo $gdwpm_opsi_chunk['local']['retries'];?>" size="2" /><br />
+						<dfn style="margin-left:120px;display:inline-block;">*Numeric only.</dfn><br />
+						<small>Note: the Chunk Size should be less than your website's upload max filesize limit (your upload max filesize limit is <?php echo @ini_get('upload_max_filesize'); ?>).</small>					
+					</p>
+				</div>
+				<button id="gdwpm_tombol_opsi_chunkpl" name="gdwpm_tombol_opsi_chunkpl">Save & Reload</button>
+				</form>
+				</div>
+				<br />
 				<?php 
 				$gdwpm_override = get_option('gdwpm_override_dir_bawaan'); // cekbok, polder
 				?>
 				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
 				<p>
 					<a onclick="gdwpm_cekbok_opsi_override_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_override' name='gdwpm_cekbok_opsi_override' value='1' <?php echo $gdwpm_override[0];?> /></a> 
-					Google Drive as Default Media Upload Storage. (experimental)<br />
+					Google Drive as Default Media Upload Storage. (experimental) [Advanced users only]<br />
 					&nbsp;<dfn>This option will change your default upload dir (<?php $def_upload_dir = wp_upload_dir(); echo $def_upload_dir['baseurl'];?>) to Google Drive. 
 					This mean, when you upload files through default uploader (eg: Media >> Add New) it will automatically uploading your files to Google Drive.</dfn>
 				</p>
@@ -136,6 +192,22 @@ function gdwpm_tombol_ukuran_preview_eksen(){
 				<span id="gdwpm_cekbok_opsi_override_info"></span>
 				</div>
 <script type="text/javascript">	
+function gdwpm_cekbok_opsi_thumbs_eksen(){
+	if (jQuery('#gdwpm_cekbok_opsi_thumbs').prop('checked')){
+		document.getElementById("gdwpm_opsi_thumbs_eksen").style.display = "block";
+	}else{
+		document.getElementById("gdwpm_opsi_thumbs_eksen").style.display = "none";
+	}
+}
+
+function gdwpm_cekbok_opsi_chunkpl_eksen(){
+	if (jQuery('#gdwpm_cekbok_opsi_chunkpl').prop('checked')){
+		document.getElementById("gdwpm_folder_opsi_chunkpl_eksen").style.display = "block";
+	}else{
+		document.getElementById("gdwpm_folder_opsi_chunkpl_eksen").style.display = "none";
+	}
+}
+
 function gdwpm_cekbok_opsi_kategori_eksen(){
 	if (jQuery('#gdwpm_cekbok_opsi_kategori').prop('checked')){
 		document.getElementById("gdwpm_folder_opsi_kategori_eksen").style.display = "block";
@@ -229,7 +301,7 @@ $gdwpm_dummy_fol = get_option('gdwpm_dummy_folder');
 				<div class="ui-widget-content ui-corner-all" style="padding:1em;">	
 					<p>
 					<a onclick="gdwpm_cekbok_opsi_dummy_eksen();"><input type='checkbox' id='gdwpm_cekbok_opsi_dummy' name='gdwpm_cekbok_opsi_dummy' value='1' <?php echo $gdwpm_dummy_fol;?> /></a>
-					Enable Dummy Image URL. (Rewrite original Google Drive image URL)<br />
+					Enable Dummy Image URL. (Rewrite original Google Drive image URL) [Advanced users only]<br />
 					&nbsp;<dfn>When you add an image into Media Library (auto or manually), this option will rewrite original Google Drive Image URL to internal dummy URL. (eg: 'https://docs.google.com/uc?id=google-drive-file-id&export=view' will be something like '<?php echo $def_upload_dir['baseurl'];?>/gdwpm_images/google-drive-file-id.jpg'). 
 					<!-- With this feature (internal URLs), it makes more flexible to working with another plugins/themes. -->
 					</dfn>
@@ -292,6 +364,20 @@ function gdwpm_tombol_opsi_dummy_eksen(){
 }
   jQuery(function() {
     jQuery( "#gdwpm_tombol_opsi_kategori" )
+      .button({
+      icons: {
+        primary: "ui-icon-disk"
+      }
+    });	
+	
+    jQuery( "#gdwpm_tombol_opsi_thumbs" )
+      .button({
+      icons: {
+        primary: "ui-icon-disk"
+      }
+    });	
+	
+    jQuery( "#gdwpm_tombol_opsi_chunkpl" )
       .button({
       icons: {
         primary: "ui-icon-disk"

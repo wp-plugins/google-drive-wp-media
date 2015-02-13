@@ -41,7 +41,8 @@ jQuery(document).ready(function($) {
 	$('.updated').hide();
 		$('#hasil').empty();
 		$('#vaginasi').empty();
-	$('#gdwpm_masuk_perpus_teks').hide();
+		$('#gdwpm_info_folder_thumbs').hide();
+		$('#gdwpm_masuk_perpus_teks').hide();
 		$('#hasil').hide();
 	var data = {
 		action: 'gdwpm_on_action',
@@ -53,8 +54,12 @@ jQuery(document).ready(function($) {
 		$("#gdwpm_loading_gbr").hide();
 		$('#hasil').show();
 		if(response.indexOf("radio") > 1){
-	$('#gdwpm_masuk_perpus_teks').show();}
-	//alert('Got this from the server: ' + response);
+			if($('#folder_pilian option:selected').text() != 'gdwpm-thumbnails'){
+				$('#gdwpm_masuk_perpus_teks').show();
+			}else{
+				$('#gdwpm_info_folder_thumbs').show();
+			}
+		}
 		$('#gdwpm_info_masuk_perpus').empty();
 		var $holder = $('<div/>').html(response);
 $('.sukses').html($('.sukses', $holder).html());
@@ -90,6 +95,7 @@ $("#hasil").tooltip({
 		$('.sukses').hide();
 		$('.updated').hide();
 		$('#hasil').empty();
+		$('#gdwpm_info_folder_thumbs').hide();
 		$('#gdwpm_masuk_perpus_teks').hide();
 		$('#hasil').hide();		
 		var clicked = $(this);
@@ -104,7 +110,12 @@ $("#hasil").tooltip({
 		$("#gdwpm_loading_gbr").hide();
 		$('#hasil').show();
 		if(response.indexOf("radio") > 1){
-		$('#gdwpm_masuk_perpus_teks').show();}
+			if($('#folder_pilian option:selected').text() != 'gdwpm-thumbnails'){
+				$('#gdwpm_masuk_perpus_teks').show();
+			}else{
+				$('#gdwpm_info_folder_thumbs').show();
+			}
+		}
 		$('#gdwpm_info_masuk_perpus').empty();
 		$('#vaginasi').empty();
 		var $holder = $('<div/>').html(response);
