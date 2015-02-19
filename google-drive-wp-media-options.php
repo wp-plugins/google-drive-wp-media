@@ -157,7 +157,7 @@ function gdwpm_tombol_ukuran_preview_eksen(){
 					<label for="localchunk_size" style="margin-left:25px;display:inline-block;width:85px;">Chunk Size: </label>
 						<input type="number" id="gdwpm_local_chunk_size" name="gdwpm_local_chunk_size" min="50" max="9999" step="10" value="<?php echo $gdwpm_opsi_chunk['local']['chunk'];?>" size="4" /> kB <small>(Kilobyte)</small><br />
 					<label for="localmax_retries" style="margin-left:25px;display:inline-block;width:85px;">Max Retries: </label>
-						<input type="number" id="gdwpm_local_chunk_retries" name="gdwpm_local_chunk_retries" min="1" max="9" step="1" value="<?php echo $gdwpm_opsi_chunk['local']['retries'];?>" size="2" /><br />
+						<input type="number" id="gdwpm_local_chunk_retries" name="gdwpm_local_chunk_retries" min="3" max="9" step="1" value="<?php echo $gdwpm_opsi_chunk['local']['retries'];?>" size="2" /><br />
 						<dfn style="margin-left:120px;display:inline-block;">*Numeric only.</dfn><br />
 						<small>Note: the Chunk Size should be less than your website's upload max filesize limit (your upload max filesize limit is <?php echo @ini_get('upload_max_filesize'); ?>).</small>					
 					</p>

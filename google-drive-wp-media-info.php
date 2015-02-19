@@ -12,7 +12,7 @@ if(!$gdwpm_opt_akun){
 }
 $gdwpm_apiConfig['use_objects'] = true;
 if(!$gdwpm_service){$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );}
-if(!$ebot){	$ebot = $gdwpm_service->getAbout(); }
+if(!isset($ebot)){	$ebot = $gdwpm_service->getAbout(); }
 ?>
 <table id="gdwpm_info_akun">
 	<tr>

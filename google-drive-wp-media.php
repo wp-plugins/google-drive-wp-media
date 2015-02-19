@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.2.7
+Version: 2.2.8
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.2.7' );
+define( 'VERSI_GDWPM', '2.2.8' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -136,7 +136,7 @@ if(isset($_REQUEST['gdwpm_opsi_chunkpl_nonce'])){
 // SHORTCODE  ===> [gdwpm id="GOOGLE-DRIVE-FILE-ID" w="640" h="385"]
 function gdwpm_iframe_shortcode($gdwpm_kode_berkas) {
 	$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview'); 
-	if($gdwpm_kode_berkas['video'] != 'auto' && $gdwpm_kode_berkas['video'] != 'manual'){
+	if(isset($gdwpm_kode_berkas['video']) != 'auto' && isset($gdwpm_kode_berkas['video']) != 'manual'){
 		$gdwpm_kode_berkas = shortcode_atts( array( 'id' => '', 'w' => $gdwpm_ukuran_preview[0], 'h' => $gdwpm_ukuran_preview[1]), $gdwpm_kode_berkas, 'gdwpm' );
 		return '<iframe src="https://docs.google.com/file/d/' . $gdwpm_kode_berkas['id'] . '/preview" width="' . $gdwpm_kode_berkas['w'] . '" height="' . $gdwpm_kode_berkas['h'] . '"></iframe>';
 	}else{
@@ -187,15 +187,15 @@ function gdwpm_init() {
 	}
 }
 function gdwpm_filter_kategori_media_tab($query) {
-  if ( 'attachment' != $query->query_vars['post_type'] )
-			return;
+	if ( 'attachment' != isset($query->query_vars['post_type']) )
+		return;
 
-			if ( isset( $_REQUEST['query']['gdwpm_category'] ) && $_REQUEST['query']['gdwpm_category']['term_slug'] )	 :
-				$query->set( 'gdwpm_category', $_REQUEST['query']['gdwpm_category']['term_slug'] );
-			elseif ( isset( $_REQUEST['gdwpm_category'] ) && is_numeric( $_REQUEST['gdwpm_category'] ) && 0 != intval( $_REQUEST['gdwpm_category'] ) ) :
-				$term = get_term_by( 'id', $_REQUEST['gdwpm_category'], 'gdwpm_category' );
-				set_query_var( 'gdwpm_category', $term->slug );
-			endif;
+		if ( isset( $_REQUEST['query']['gdwpm_category'] ) && $_REQUEST['query']['gdwpm_category']['term_slug'] )	 :
+			$query->set( 'gdwpm_category', $_REQUEST['query']['gdwpm_category']['term_slug'] );
+		elseif ( isset( $_REQUEST['gdwpm_category'] ) && is_numeric( $_REQUEST['gdwpm_category'] ) && 0 != intval( $_REQUEST['gdwpm_category'] ) ) :
+			$term = get_term_by( 'id', $_REQUEST['gdwpm_category'], 'gdwpm_category' );
+			set_query_var( 'gdwpm_category', $term->slug );
+		endif;
 }
 function gdwpm_admin_head(){
 global $wpdb;
@@ -210,7 +210,7 @@ $terms = get_terms( 'gdwpm_category', array(
 			$attachment_terms[ 'gdwpm_category' ][] = array( 'id' => 0, 'label' => 'View all GDWPM Categories', 'slug' => '' );
 			foreach ( $terms as $term )
 				$attachment_terms[ 'gdwpm_category' ][] = array( 'id' => $term->term_id, 'label' => $term->name, 'slug' => $term->slug );
-	if(!$gdwpm_ukuran_preview){$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');}
+	$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');
 		?>
 <style type="text/css">
 .wp-admin .media-toolbar-secondary select {
@@ -284,11 +284,11 @@ add_action( 'restrict_manage_posts', 'gdwpm_image_category_filter' );
 //////////////// HALAMAN MEDIA MENU ///////////////
 add_action( 'admin_menu', 'gdwpm_menu_media' );
 function gdwpm_menu_media() {
-	add_media_page( NAMA_GDWPM, NAMA_GDWPM, 'read', ALMT_GDWPM, 'gdwpm_halaman_media' );
+	add_media_page( NAMA_GDWPM, NAMA_GDWPM, 'activate_plugins', ALMT_GDWPM, 'gdwpm_halaman_media' );
 	add_action( 'admin_enqueue_scripts', 'gdwpm_sekrip_buat_mimin' );
 }
 function gdwpm_halaman_media() {
-	if ( !current_user_can( 'read' ) )  {
+	if(!current_user_can('activate_plugins')){
 		wp_die( __( 'You do not have sufficient permissions to access this page.' ) );
 	}
 	echo '<div class="wrap">';
@@ -300,7 +300,11 @@ function gdwpm_halaman_media() {
 /////////////// HALAMAN TAB UPLOAD /////////////////////////
 add_action('media_upload_gdwpm_nama_tab', 'gdwpm_halaman_media_upload');
 function gdwpm_halaman_media_upload() {
-	wp_iframe( 'gdwpm_halaman_utama' );
+	if(current_user_can('activate_plugins')){
+		wp_iframe( 'gdwpm_halaman_utama' );
+	}else{
+		wp_iframe( 'gdwpm_forboden_halaman_utama' );
+	}
 }
 
 add_filter('media_upload_tabs', 'gdwpm_tab_media_upload');
@@ -309,6 +313,9 @@ function gdwpm_tab_media_upload($tabs) {
 	return $tabs;
 }
 
+function gdwpm_forboden_halaman_utama() {
+	echo '<p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>You do not have sufficient permissions to access this page.</p>';
+}
 ////////////////////////// ADMIN SEKRIP ////////////////////////////////
 function gdwpm_sekrip_buat_mimin() {
 	wp_enqueue_style( 'gdwpm-jqueryui-theme' );
@@ -710,7 +717,7 @@ if($cek_kunci == 'false'){ ?>
 						There's a new folder.
 						<a href=""><button id="gdwpm_tombol_info_folder_baru" name="gdwpm_tombol_info_folder_baru"><?php _e('Reload Now') ?></button></a>
 					</span>
-				<?php add_thickbox(); if(!$gdwpm_ukuran_preview){$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');}?>
+				<?php add_thickbox(); $gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');?>
 				<p>
 					<span class="sukses">Please select folder and click Get Files, to show all files belongs to it.<br /><br />
 						<dfn>New</dfn> Auto create thumbnails and Chunking Option available, just navigate to the Options page and customize your settings to help suit your needs.<br/>
@@ -771,12 +778,10 @@ if($cek_kunci == 'false'){ ?>
 				</p>
 				
 <?php
-			if(!$gdwpm_opsi_chunk){
-				$gdwpm_opsi_chunk = get_option('gdwpm_opsi_chunk');
-				if(!$gdwpm_opsi_chunk || empty($gdwpm_opsi_chunk)){
-					$gdwpm_opsi_chunk = array('local' => array('cekbok' => 'checked', 'chunk' => '700', 'retries' => '3'), 'drive' => array('cekbok' => 'checked', 'chunk' => '2', 'retries' => '3'));
-					update_option('gdwpm_opsi_chunk', $gdwpm_opsi_chunk);
-				}
+			$gdwpm_opsi_chunk = get_option('gdwpm_opsi_chunk');
+			if(!$gdwpm_opsi_chunk || empty($gdwpm_opsi_chunk)){
+				$gdwpm_opsi_chunk = array('local' => array('cekbok' => 'checked', 'chunk' => '700', 'retries' => '3'), 'drive' => array('cekbok' => 'checked', 'chunk' => '2', 'retries' => '3'));
+				update_option('gdwpm_opsi_chunk', $gdwpm_opsi_chunk);
 			}
 			$gdwpm_satpam_buat_nonce = wp_create_nonce( 'gdwpm_satpam_aplod_berkas' );
 				?> 
@@ -1016,7 +1021,7 @@ jQuery(function(){
 <?php }else{ ?>
 			<div id="tabs-6">
 				<p>
-					There's no folder exists/detected in the "Incoming" or "Shared with me" area in your Google Drive.<br/>
+					There's no folder exists/detected in the "Incoming" or "Shared with me" area in your Google Drive or this current user (<?php echo $gdwpm_opt_akun[2];?>) have no (access rights to read) folder.<br/>
 					For more info about "Incoming" or "Shared with me", please visit <dfn>https://support.google.com/drive/answer/2375057?hl=en</dfn>.
 				</p>
 				<p>
@@ -1324,27 +1329,31 @@ jQuery(function(){
 
 }
 
-function gdwpm_ijin_masuk_perpus($jenis_berkas, $nama_berkas, $id_berkas, $deskrip_berkas, $jeneng_folder = 'Uncategorized', $img_sizes = ''){
+function gdwpm_ijin_masuk_perpus($jenis_berkas, $nama_berkas, $id_berkas, $deskrip_berkas, $jeneng_folder = 'Uncategorized', $img_sizes = '', $metainfo = ''){
 	// ADD TO LIBRARY
 	$gdwpm_lebar_gbr = ''; $gdwpm_tinggi_gbr = '';
 	$gdwpm_fol_n_id = 'G_D_W_P_M-file_ID/' . $id_berkas;
 	$gdwpm_fol_n_idth = '';
-	if(!empty($img_sizes) || $img_sizes != ''){
-		// selfWidth:xx selfHeight:xx thumbId:xxx thumbWidth:xx thumbHeight:xx
-		preg_match_all('/(\w+):("[^"]+"|\S+)/', $img_sizes, $matches);
-		$img_meta = array_combine($matches[1], $matches[2]);
-		if(array_key_exists('thumbId', $img_meta)){
-			$gdwpm_fol_n_idth = $img_meta['thumbId'];
-		}
-		if(array_key_exists('selfWidth', $img_meta)){
-			$gdwpm_lebar_gbr = $img_meta['selfWidth'];
-		}
-		if(array_key_exists('selfHeight', $img_meta)){
-			$gdwpm_tinggi_gbr = $img_meta['selfHeight'];
-		}
-	}
 	
 	if(strpos($jenis_berkas, 'image') !== false){
+		if(!empty($img_sizes) || $img_sizes != ''){
+			// selfWidth:xx selfHeight:xx thumbId:xxx thumbWidth:xx thumbHeight:xx
+			preg_match_all('/(\w+):("[^"]+"|\S+)/', $img_sizes, $matches);
+			$img_meta = array_combine($matches[1], $matches[2]);
+			if(array_key_exists('thumbId', $img_meta)){
+				$gdwpm_fol_n_idth = $img_meta['thumbId'];
+			}
+			if(array_key_exists('selfWidth', $img_meta)){
+				$gdwpm_lebar_gbr = $img_meta['selfWidth'];
+			}
+			if(array_key_exists('selfHeight', $img_meta)){
+				$gdwpm_tinggi_gbr = $img_meta['selfHeight'];
+			}
+		}else{
+			$gdwpm_ukur_gambar = getimagesize('https://docs.google.com/uc?id=' . $id_berkas. '&export=view');
+			$gdwpm_lebar_gbr = $gdwpm_ukur_gambar[0];
+			$gdwpm_tinggi_gbr = $gdwpm_ukur_gambar[1];
+		}
 		$gdwpm_fol_n_id = 'G_D_W_P_M-ImageFile_ID/' . $id_berkas;
 		
 		$gdwpm_dummy_fol = get_option('gdwpm_dummy_folder');
@@ -1359,21 +1368,35 @@ function gdwpm_ijin_masuk_perpus($jenis_berkas, $nama_berkas, $id_berkas, $deskr
 				$gdwpm_fol_n_idth .= '.jpg';
 			}
 		}
-		//, 'size' => $ukuran
-	}	
+		if(empty($metainfo) || $metainfo == ''){
+			$meta = array('aperture' => 0, 'credit' => '', 'camera' => '', 'caption' => $nama_berkas, 'created_timestamp' => 0, 'copyright' => '',  
+					'focal_length' => 0, 'iso' => 0, 'shutter_speed' => 0, 'title' => $nama_berkas); 
+		}else{
+			$meta = json_decode($metainfo, true);
+		}
+		$metadata = array("image_meta" => $meta, "width" => $gdwpm_lebar_gbr, "height" => $gdwpm_tinggi_gbr, 'file' => $gdwpm_fol_n_id, "gdwpm"=>TRUE); 
+		
+		if(isset($img_meta['thumbId'])){
+			$metadata['sizes'] = array('thumbnail' => array('file' => $gdwpm_fol_n_idth, 'width' => $img_meta['thumbWidth'], 'height' => $img_meta['thumbHeight']));
+		}
+	}elseif(strpos($jenis_berkas, 'video') !== false){
+		$metadata = '';
+		if(!empty($metainfo) || $metainfo != ''){
+			$metadata = json_decode($metainfo, true);
+		}
+	}elseif(strpos($jenis_berkas, 'audio') !== false){
+		$metadata = '';
+		if(!empty($metainfo) || $metainfo != ''){
+			$metadata = json_decode($metainfo, true);
+		}
+	}else{
+		$metadata = '';
+	}
 	
-	$meta = array('aperture' => 0, 'credit' => '', 'camera' => '', 'caption' => $nama_berkas, 'created_timestamp' => 0, 'copyright' => '',  
-				'focal_length' => 0, 'iso' => 0, 'shutter_speed' => 0, 'title' => $nama_berkas); 
 	$attachment = array( 'post_mime_type' => $jenis_berkas, 'guid' => $gdwpm_fol_n_id,
 				'post_parent' => 0,	'post_title' => $nama_berkas, 'post_content' => $deskrip_berkas);
 	$attach_id = wp_insert_attachment( $attachment, $gdwpm_fol_n_id, 0 );
-	
-	$metadata = array("image_meta" => $meta, "width" => $gdwpm_lebar_gbr, "height" => $gdwpm_tinggi_gbr, 'file' => $gdwpm_fol_n_id, "gdwpm"=>TRUE); 
-	
-	if(isset($img_meta['thumbId'])){
-		$metadata['sizes'] = array('thumbnail' => array('file' => $gdwpm_fol_n_idth, 'width' => $img_meta['thumbWidth'], 'height' => $img_meta['thumbHeight']));
-	}
-	
+		
     wp_update_attachment_metadata( $attach_id,  $metadata);	
 	
 $gdwpm_opsi_kategori = get_option('gdwpm_opsi_kategori_dr_folder'); 
@@ -1399,11 +1422,16 @@ function gdwpm_action_callback() {
 			$daftar_berkas = $gdwpm_service->getFilesInFolder($fld, $_POST['pilmaxres']);
 		}
 		
+		//array($daftarfile, $i, $totalhal, $halterlihat)
 		if($daftar_berkas[1] <= 0){ // total files < 1
-			//$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
 			if($daftar_berkas[2] > 1){ // total halaman > 1
-				echo '<div class="sukses"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>Your request contains multiple pages, click the page number below.</p></div>';	
-				echo $daftar_berkas[0];
+				if($daftar_berkas[3] == $daftar_berkas[2]){
+					echo '<div class="sukses"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>This page is empty.</p></div>';
+					echo $daftar_berkas[0];
+				}else{
+					echo '<div class="sukses"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>Your request contains multiple pages, click the page number below.</p></div>';	
+					echo $daftar_berkas[0];
+				}
 			}else{
 				echo '<div class="sukses"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>This folder is empty.</p></div>';
 			}
@@ -1424,10 +1452,14 @@ function gdwpm_action_callback() {
 		$i = $daftar_berkas[1];
 		
 		if($daftar_berkas[1] <= 0){
-			//$daftarfile = '<p style="color:red; font-weight:bold">Your folder is empty.</p>';
 			if($daftar_berkas[2] > 1){ // total halaman > 1
-				echo '<div class="sukses_del"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>Your request contains multiple pages, click the page number below.</p></div>';
-				echo $daftarfile;
+				if($daftar_berkas[3] == $daftar_berkas[2]){
+					echo '<div class="sukses_del"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>This page is empty.</p></div>';
+					echo $daftarfile;
+				}else{
+					echo '<div class="sukses_del"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>Your request contains multiple pages, click the page number below.</p></div>';
+					echo $daftarfile;
+				}
 			}else{
 				echo '<div class="sukses_del"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>This folder is empty.</p></div>';
 			}
@@ -1720,12 +1752,24 @@ function gdwpm_action_callback() {
 				$fileId = $gdwpm_service->createFileFromPath( $filePath, $filename, $content, $fileParent );
 				if($fileId){
 					$gdwpm_service->setPermissions( $fileId, 'me', 'reader', 'anyone' );
-					if($gdwpm_sizez_meta != '' || !empty($gdwpm_sizez_meta)){
+					if(strpos($mime_berkas_arr['type'], 'image') !== false && !empty($gdwpm_sizez_meta)){
 						$gdwpm_service->insertProperty($fileId, 'gdwpm-sizes', $gdwpm_sizez_meta);
 					}
 					$sukinfo = '';
-					if(!empty($mime_berkas) && $_POST['gdpwm_med_ly'] == '1'){
-						gdwpm_ijin_masuk_perpus($mime_berkas, $filename, $fileId, $content, $nama_polder, $gdwpm_sizez_meta);
+					$metainfo = '';
+					if(!empty($mime_berkas) && isset($_POST['gdpwm_med_ly']) == '1'){
+			/*			if(strpos($mime_berkas_arr['type'], 'video') !== false){
+							$gdwpm_meta_arr = wp_read_video_metadata( $filePath );
+							$metainfo = json_encode($gdwpm_meta_arr);
+						}elseif(strpos($mime_berkas_arr['type'], 'audio') !== false){
+							$gdwpm_meta_arr = wp_read_audio_metadata( $filePath );
+							$metainfo = json_encode($gdwpm_meta_arr);
+						}elseif(strpos($mime_berkas_arr['type'], 'image') !== false){
+							$gdwpm_meta_arr = wp_read_image_metadata( $filePath );
+							$metainfo = json_encode($gdwpm_meta_arr);
+						}
+			*/
+						gdwpm_ijin_masuk_perpus($mime_berkas, $filename, $fileId, $content, $nama_polder, $gdwpm_sizez_meta, $metainfo);
 						$sukinfo = ' and added into your Media Library';
 					}
 					echo '<div class="updated"><p>'.$filename.' (<strong>'.$fileId.'</strong>) successfully uploaded to <strong>'.$nama_polder.'</strong>'.$sukinfo.'.</p></div>';
@@ -1912,9 +1956,12 @@ class GDWPMBantuan {
 			$parameters = array('maxResults' => $maxResults);
 			$pageTokenInput = $pageToken;
 			$gdwpm_kecing_hal = get_option($opsi_kecing);
-			if(!$gdwpm_kecing_hal || empty($gdwpm_kecing_hal)){$gdwpm_kecing_hal = array();}
 			if (empty($pageToken) || $pageToken == '') {
 			// generate halaman
+				//if($gdwpm_kecing_hal || !empty($gdwpm_kecing_hal)){
+					//delete_option($opsi_kecing);
+				//}
+				$gdwpm_kecing_hal = array();
 				$errormes = '';
 				$halarr = array($haldepan => 'bantuanhalamansatu');
 				do {
@@ -1928,6 +1975,14 @@ class GDWPMBantuan {
 							//$hal .= '&nbsp;<button id="halaman" value="'.$pageToken.'">'.$haldepan.'</button>';
 							$halarr[$haldepan] = $pageToken;
 							if($haldepan % 10 == 0){sleep(1);}
+						//}elseif($haldepan > 1){
+						//cek n buang halman trakir jika kosong
+							//$parameters['pageToken'] = $halarr[$haldepan - 1];
+							//$files = $this->_service->children->listChildren($folderId, $parameters);
+							//$result = array();
+							//if(count(array_merge($result, $files->getItems())) < 1){
+								//unset($halarr[$haldepan - 1]);
+							//}
 						}
 					} catch (Exception $e) {
 						$errormes = "<kbd>An error occurred: " . $e->getMessage() . "</kbd>";
@@ -2010,7 +2065,8 @@ class GDWPMBantuan {
 							
 			$vaginasi =	'<div id="'.$div_pagi.'">'.$halsiap.'</div>';
 			$daftarfile .= $vaginasi;
-			return array($daftarfile, $i, $totalhal);//, $halterlihat, $totalhal);//items, items onpage, currentpage, totalpage
+			if($i == 0 && $totalhal > 1 && $halterlihat == $totalhal){$daftarfile = $vaginasi;}
+			return array($daftarfile, $i, $totalhal, $halterlihat);//, $halterlihat, $totalhal);//items, items onpage, currentpage, totalpage
 		}
 		
 }
