@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.2.8
+Version: 2.2.9
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.2.8' );
+define( 'VERSI_GDWPM', '2.2.9' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -2024,8 +2024,8 @@ class GDWPMBantuan {
 						if(strpos($file_mime, 'image') !== false){
 							$view = '<a href="https://www.googledrive.com/host/'.$fileId.'" title="Open link in a new window" target="_blank" class="tabeksen">View</a>';
 							$properties = $this->_service->properties->listProperties($fileId);
-							$file_pptis = $properties->getItems();
-							if(count($file_pptis) > 0){$file_pptis = $file_pptis[0]->getValue(); }
+							$getfile_pptis = $properties->getItems();
+							if(count($getfile_pptis) > 0){$file_pptis = $getfile_pptis[0]->getValue(); }
 						} 
 						$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.$file_mime.' | '.$file_title.' | '.$fileId.' | '.$file_desc.' | '.$folder_name.' | '.$file_pptis.'" ' . $checked . '></td><td class="kolom_file" title="' . $file_thumb . '">'.$fileId.'</td>';
 						$daftarfile .=  '<td title="' . $file_desc . '"><img src="' . $file_icon . '" title="' . $file_mime . '"> ' . $file_title . '</td>';
