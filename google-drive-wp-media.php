@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.2.9
+Version: 3.0
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -32,7 +32,7 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.2.9' );
+define( 'VERSI_GDWPM', '3.0' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
 
 require_once 'gdwpm-api/Google_Client.php';
@@ -234,13 +234,20 @@ jQuery(function($) {
 			var self = this;
 			this.window.on('select', function() {
                 var first = self.window.state().get('selection').first().toJSON();
-				if (first.url.indexOf(".google") > -1 || first.url.indexOf("gdwpm_images") > -1){
+				if (first.url.indexOf(".google") > -1){
 					var gdwpm_video_cekbok = '<?php echo $gdwpm_ukuran_preview[2];?>';
 					if (first.mime.indexOf("video/") > -1 && gdwpm_video_cekbok == 'checked'){
 						wp.media.editor.insert('[gdwpm id="' + first.filename + '" video="<?php echo $gdwpm_ukuran_preview[3];?>" w="<?php echo $gdwpm_ukuran_preview[4];?>" h="<?php echo $gdwpm_ukuran_preview[5];?>"]');
 					}else{
 						wp.media.editor.insert('[gdwpm id="' + first.filename + '" w="<?php echo $gdwpm_ukuran_preview[0];?>" h="<?php echo $gdwpm_ukuran_preview[1];?>"]');
 					}
+				}
+				if (first.url.indexOf("gdwpm_images") > -1){
+					var gdfileid = first.filename;
+					if( gdfileid.indexOf(".") > -1 ){
+						var gdfileid = gdfileid.substr(0, gdfileid.lastIndexOf("."));
+					}
+					wp.media.editor.insert('[gdwpm id="' + gdfileid + '" w="<?php echo $gdwpm_ukuran_preview[0];?>" h="<?php echo $gdwpm_ukuran_preview[1];?>"]');
 				}
             });
 		}
@@ -370,27 +377,44 @@ $cek_kunci = 'true'; // kosong
 			die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
 			
 		} else {
-			if (!EMPTY($_POST['gdwpm_imel']) && !EMPTY($_POST['gdwpm_klaen_aidi']) && !EMPTY($_POST['gdwpm_nama_service']) && !EMPTY($_POST['gdwpm_kunci_rhs']))
-			{
-				$gdwpm_opt_imel = sanitize_email($_POST['gdwpm_imel']);
-				$gdwpm_opt_klaen_aidi = sanitize_text_field($_POST['gdwpm_klaen_aidi']);
-				$gdwpm_opt_nama_service = sanitize_email($_POST['gdwpm_nama_service']);
-				$gdwpm_opt_kunci_rhs = esc_url($_POST['gdwpm_kunci_rhs']);
+			$gdwpm_opt_imel = sanitize_email($_POST['gdwpm_imel']);
+			$gdwpm_opt_klaen_aidi = sanitize_text_field($_POST['gdwpm_klaen_aidi']);
+			$gdwpm_opt_nama_service = sanitize_email($_POST['gdwpm_nama_service']);
+			$gdwpm_opt_kunci_rhs = esc_url($_POST['gdwpm_kunci_rhs']);
 				
-				$gdwpm_opt = array($gdwpm_opt_imel, $gdwpm_opt_klaen_aidi, $gdwpm_opt_nama_service, $gdwpm_opt_kunci_rhs);
-				update_option('gdwpm_akun_opt', $gdwpm_opt);
-				update_option('gdwpm_img_thumbs', array('', '', '150', '150', 'false'));
-				echo '<div class="updated"><p>Great! API settings successfully saved.</p></div>';
+			$gdwpm_opt_akun = array($gdwpm_opt_imel, $gdwpm_opt_klaen_aidi, $gdwpm_opt_nama_service, $gdwpm_opt_kunci_rhs);
+			
+			if (!EMPTY($gdwpm_opt_imel) && !EMPTY($gdwpm_opt_klaen_aidi) && !EMPTY($gdwpm_opt_nama_service) && !EMPTY($gdwpm_opt_kunci_rhs))
+			{
+				// test akun				
+				if(!isset($gdwpm_service)){ 
+					$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] ); 
+				}
+				try {
+					$gdwpm_apiConfig['use_objects'] = true;
+					$ebot = $gdwpm_service->getAbout();
+					update_option('gdwpm_akun_opt', $gdwpm_opt_akun);
+					update_option('gdwpm_img_thumbs', array('', '', '150', '150', 'false'));
+					echo '<div class="updated"><p>API settings successfully saved.</p></div>';
+				} catch (Exception $errorkon) {
+					$cek_kunci = 'true';
+					echo '<div class="error"><p>An error occurred: ' . wp_strip_all_tags($errorkon->getMessage()) . '. Your settings could not be saved.</p></div>';
+				}			
 			}else{
-				echo '<div class="error"><p>All fields are required.</p></div>';
+				echo '<div class="error"><p>All fields are required. Your settings could not be saved.</p></div>';
 			}
 		}
 	}
-$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, gdwpm_service akun, private key
+if(!isset($gdwpm_opt_akun)){$gdwpm_opt_akun = get_option('gdwpm_akun_opt');} // imel, client id, gdwpm_service akun, private key
 if($gdwpm_opt_akun){
-$cek_kunci = 'false';
-//$gdwpm_apiConfig['use_objects'] = true;
-if(!$gdwpm_service){ $gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] ); }
+	if (!EMPTY($gdwpm_opt_akun[0]) && !EMPTY($gdwpm_opt_akun[1]) && !EMPTY($gdwpm_opt_akun[2]) && !EMPTY($gdwpm_opt_akun[3]))
+	{
+		$cek_kunci = 'false';
+		//$gdwpm_apiConfig['use_objects'] = true;
+		if(!isset($gdwpm_service)){ 
+			$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] ); 
+		}
+	}
 }
 
 if(isset($_POST['gdwpm_opsi_thumbs_nonce'])){
@@ -655,23 +679,34 @@ h2:before { content: ""; display: block; background: url("<?php echo plugins_url
 <?php
 	$gdwpm_apiConfig['use_objects'] = true;
 	
-	if($gdwpm_opt_akun){
-		$parameters = array('q' => "mimeType = 'application/vnd.google-apps.folder'", 'maxResults' => 50);
-        $files = $gdwpm_service->files->listFiles($parameters);
-		$folderpil = '<select id="folder_pilian" name="folder_pilian">';
-		$foldercek = array();
-		foreach( $files->getItems() as $item )
-		{//description, title
-			if('gdwpm-thumbnails' == $item->getTitle()){$selek = ' disabled';}else{$selek = '';}
-			$folderpil .=  '<option value="'.$item->getId().'"'.$selek.'>'.$item->getTitle().'</option>';
-			$foldercek[] = $item->getTitle(); 
+	if($gdwpm_opt_akun && !isset($errorkon)){
+		if (!EMPTY($gdwpm_opt_akun[0]) && !EMPTY($gdwpm_opt_akun[1]) && !EMPTY($gdwpm_opt_akun[2]) && !EMPTY($gdwpm_opt_akun[3]))
+		{
+			// cek dolo sbagai awal dr smuanya :p
+			try {
+				$parameters = array('q' => "mimeType = 'application/vnd.google-apps.folder'", 'maxResults' => 50);
+				$files = $gdwpm_service->files->listFiles($parameters);
+				$folderpil = '<select id="folder_pilian" name="folder_pilian">';
+				$foldercek = array();
+				foreach( $files->getItems() as $item )
+				{//description, title
+					if('gdwpm-thumbnails' == $item->getTitle()){$selek = ' disabled';}else{$selek = '';}
+					$folderpil .=  '<option value="'.$item->getId().'"'.$selek.'>'.$item->getTitle().'</option>';
+					$foldercek[] = $item->getTitle(); 
+				}
+				$folderpil .= '</select>';
+				$foldercek = array_filter($foldercek);
+			
+				if (empty($foldercek)) {
+					$folderpil = '';
+				}
+			} catch (Exception $e) {
+				$cek_kunci = 'true';
+				echo '<div class="error"><p>An error occurred: ' . wp_strip_all_tags($e->getMessage()) . '</p></div>';
+			}	
 		}
-		$folderpil .= '</select>';
-		$foldercek = array_filter($foldercek);
-	
-		if (empty($foldercek)) {
-			$folderpil = '';
-		}
+	}else{
+		$cek_kunci = 'true';
 	}
 ?>
 <div id="accordion" style="margin:10px 10px 5px 10px;">
@@ -737,7 +772,7 @@ if($cek_kunci == 'false'){ ?>
 						Google Docs Viewer: <br />https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>%26export%3Dview<br/>
 						* Replace <code><strong>GOOGLE-DRIVE-FILE-ID</strong></code> with your file ID. 
 						<?php
-							$ebot = $gdwpm_service->getAbout();
+							if(!isset($ebot)){$ebot = $gdwpm_service->getAbout();}
 							echo '<br /><br />Storage Usage<br />Total quota: '.size_format($ebot->getQuotaBytesTotal(), 2).'<br />
 							Quota Used: '.size_format($ebot->getQuotaBytesUsed(), 2).'<br />
 							Available: '.size_format($ebot->getQuotaBytesTotal() - $ebot->getQuotaBytesUsed(), 2).'<br />';
@@ -1202,7 +1237,7 @@ jQuery(function(){
       }
     });
     jQuery( "#dialog-message" ).dialog({
-      autoOpen: <?php echo $cek_kunci;?>,
+      autoOpen: <?php if(isset($errorkon)){echo 'false';}else{echo $cek_kunci;}?>,
       modal: true,
       width: 350,
       resizable: false,
