@@ -1,10 +1,10 @@
 === Google Drive WP Media ===
 Contributors: moch-a
 Donate link: http://www.mochamir.com/
-Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google
+Tags: google drive, google drive upload, media library, google drive plugin, gallery, featured image, download, files hosting, image, media, pictures, links, images, post, upload, hosting storage, google, shortcode, image galleries, album
 Requires at least: 3.5
 Tested up to: 4.1
-Stable tag: 2.3
+Stable tag: 2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,11 @@ There's something wrong (typo or something) w/ your Service Account Name setting
 Click file which you want to attach, on ATTACHMENT DISPLAY SETTINGS, change Link to Media File. Click Insert into post.
 
 == Changelog ==
+
+= 2.4 =
+
+* Bugs fixed
+* Image Galleries added
 
 = 2.3 =
 
@@ -253,8 +258,8 @@ None
 
 == Screenshots ==
 
-1. Media Upload Tab
-2. Files & Folder List
-3. Media Menu
-4. Media Library Attachment
-5. Media Library Categories
+1. Google Drive API Key Setup
+2. Folder Creation
+3. Upload file
+4. Files list
+5. Media Upload Tab

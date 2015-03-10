@@ -5,7 +5,7 @@ Plugin URI: http://wordpress.org/plugins/google-drive-wp-media/
 Description: WordPress Google Drive integration plugin. Google Drive on Wordpress Media Publishing. Upload files to Google Drive from WordPress blog.
 Author: Moch Amir
 Author URI: http://www.mochamir.com/
-Version: 2.3
+Version: 2.4
 License: GNU General Public License v2.0 or later
 License URI: http://www.opensource.org/licenses/gpl-license.php
 */
@@ -31,11 +31,8 @@ License URI: http://www.opensource.org/licenses/gpl-license.php
 define( 'NAMA_GDWPM', 'Google Drive WP Media' );
 define( 'ALMT_GDWPM', 'google-drive-wp-media' );
 define( 'MINPHP_GDWPM', '5.3.0' );
-define( 'VERSI_GDWPM', '2.3' );
+define( 'VERSI_GDWPM', '2.4' );
 define( 'MY_TEXTDOMAIN', 'gdwpm' );
-
-require_once 'gdwpm-api/Google_Client.php';
-require_once 'gdwpm-api/contrib/Google_DriveService.php';
 
 $gdwpm_override_optional = get_option('gdwpm_override_dir_bawaan'); // cekbok, polder
 
@@ -49,6 +46,9 @@ if($gdwpm_override_optional[0] == 'checked' && !empty($gdwpm_override_optional[1
 		
 			global $gdwpm_override_optional;
 			
+require_once 'gdwpm-api/Google_Client.php';
+require_once 'gdwpm-api/contrib/Google_DriveService.php';
+
 			$gdwpm_service_ride = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
 			
 			$filename = $file['name'];
@@ -95,43 +95,6 @@ if($gdwpm_override_optional[0] == 'checked' && !empty($gdwpm_override_optional[1
 	}
 }
 
-if(isset($_REQUEST['gdwpm_opsi_kategori_nonce'])){
-	require_once(ABSPATH .'wp-includes/pluggable.php');
-	if(!wp_verify_nonce( $_REQUEST['gdwpm_opsi_kategori_nonce'], 'gdwpm_override_dir' )) {
-		die( '<div class="error"><p>Security check not verified!</p></div>' ); 
-	} else {
-		if($_POST['gdwpm_cekbok_opsi_kategori'] == 1){
-			update_option('gdwpm_opsi_kategori_dr_folder', 'checked');
-			echo '<div class="updated"><p>GDWPM Categories has been enabled.</p></div>';
-		}else{
-			update_option('gdwpm_opsi_kategori_dr_folder', '');
-			echo '<div class="updated"><p>GDWPM Categories has been disabled.</p></div>';
-		}
-	}
-}
-
-if(isset($_REQUEST['gdwpm_opsi_chunkpl_nonce'])){
-	require_once(ABSPATH .'wp-includes/pluggable.php');
-	if(!wp_verify_nonce( $_REQUEST['gdwpm_opsi_chunkpl_nonce'], 'gdwpm_chunkpl_nonce' )) {
-		die( '<div class="error"><p>Security check not verified!</p></div>' ); 
-	} else {
-		$input_cek = true;
-		$input_chunkarr = array('gdwpm_drive_chunk_size', 'gdwpm_drive_chunk_retries', 'gdwpm_local_chunk_size', 'gdwpm_local_chunk_retries');
-		foreach($input_chunkarr as $val){
-			if(!ctype_digit($_POST[$val])){
-				$input_cek = false;
-				break;
-			}
-		}
-		if($input_cek){
-			if (isset($_POST['gdwpm_cekbok_opsi_chunkpl'])) {$ceket = 'checked';}else{$ceket = '';}
-			update_option('gdwpm_opsi_chunk', array('local' => array('cekbok' => $ceket, 'chunk' => $_POST['gdwpm_local_chunk_size'], 'retries' => $_POST['gdwpm_local_chunk_retries']), 'drive' => array('cekbok' => 'checked', 'chunk' => $_POST['gdwpm_drive_chunk_size'], 'retries' => $_POST['gdwpm_drive_chunk_retries'])));
-			echo '<div class="updated"><p>Chunking Settings saved.</p></div>';
-		}else{
-			echo '<div class="error"><p>Chunking Settings cannot be saved. You must provide Numeric value.</p></div>';
-		}
-	}
-}
 // SHORTCODE  ===> [gdwpm id="GOOGLE-DRIVE-FILE-ID" w="640" h="385"]
 function gdwpm_iframe_shortcode($gdwpm_kode_berkas) {
 	$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview'); 
@@ -145,6 +108,21 @@ function gdwpm_iframe_shortcode($gdwpm_kode_berkas) {
 	}
 }
 add_shortcode('gdwpm', 'gdwpm_iframe_shortcode'); 
+
+function gdwpm_gallery_code($atts){
+	extract( shortcode_atts( array('id' => null), $atts ) );
+
+	$terms = get_the_terms( $id, 'gdwpm_album' );		
+	if ( $terms && ! is_wp_error( $terms ) ){
+		$post = get_post($id);
+		$content = $post->post_content;
+	}else{
+		$content = 'Gallery not found: wrong/invalid ID.';
+	}
+	return $content;
+}
+
+add_shortcode('gdwpm-gallery', 'gdwpm_gallery_code');
 
 //////////// ADMIN INIT ///////////
 add_action( 'admin_init', 'gdwpm_admin_init' );
@@ -184,6 +162,52 @@ function gdwpm_init() {
 	
 		register_taxonomy('gdwpm_category', 'attachment', $args);
 	}
+	
+	//
+	register_post_type( 'gdwpm_galleries',
+		array(
+		  'labels' => array(
+			'name' => __( 'GDWPM Galleries' ),
+			'singular_name' => __( 'GDWPM Gallery' )
+		  ),
+		  //'public' => true,
+		  //'supports' => array('title', 'editor', 'excerpt', 'custom-fields', 'thumbnail'),
+		  'has_archive' => true,
+		  'exclude_from_search' => false,
+		  'publicly_queryable' => true,
+		  'rewrite' => array('slug' => 'gdwpm-gallery'),
+		)
+	);
+	
+	$cek_album_taxonomy = taxonomy_exists('gdwpm_album');
+	if(!$cek_album_taxonomy){
+        $labels = array(
+            'name'              => _x( 'GDWPM Albums', 'taxonomy general name' ),
+            'singular_name'     => _x( 'GDWPM Album', 'taxonomy singular name' ),
+            'search_items'      => __( 'Search GDWPM Albums' ),
+            'all_items'         => __( 'All GDWPM Albums' ),
+            'parent_item'       => __( 'Parent GDWPM Album' ),
+            'parent_item_colon' => __( 'Parent GDWPM Album:' ),
+            'edit_item'         => __( 'Edit GDWPM Album' ), 
+            'update_item'       => __( 'Update GDWPM Album' ),
+            'add_new_item'      => __( 'Add New GDWPM Album' ),
+            'new_item_name'     => __( 'New GDWPM Album Name' ),
+            'menu_name'         => __( 'GDWPM Albums' ),
+        );
+
+        $args = array(
+            'hierarchical' => TRUE,
+            'labels'       => $labels,
+            'show_ui'      => TRUE,
+            'show_admin_column' => TRUE,
+			'update_count_callback' => '_update_generic_term_count',
+            'query_var'    => TRUE,
+			'rewrite' => array('slug' => 'gdwpm-album'),
+        );	
+	
+		register_taxonomy('gdwpm_album', 'gdwpm_galleries', $args);
+	}
+	
 }
 function gdwpm_filter_kategori_media_tab($query) {
 	if ( 'attachment' != isset($query->query_vars['post_type']) )
@@ -335,8 +359,10 @@ function gdwpm_sekrip_buat_mimin() {
 	wp_enqueue_script('jquery-ui-tabs');                    
 	wp_enqueue_script('jquery-ui-widget');                
 	wp_enqueue_script('jquery-effects-core');                 
-	wp_enqueue_script('jquery-effects-explode');             
+	wp_enqueue_script('jquery-effects-explode');                
+	wp_enqueue_script('jquery-ui-sortable');           
 	wp_enqueue_script( 'gdwpm-ajax-script', plugins_url( '/js/sekrip.js', __FILE__ ), array('jquery'), VERSI_GDWPM, true );	
+	wp_enqueue_script( 'gdwpm-base64-script', plugins_url( '/js/base64.js', __FILE__ ), array('jquery'), VERSI_GDWPM, true );	
 	//backwards compatible
 	if ( version_compare( get_bloginfo('version'), '4.0', '>' ) ) {          
 		wp_enqueue_script('jquery-ui-selectmenu');  
@@ -368,7 +394,47 @@ function gdwpm_filter_gbrurl( $url ){
 
 function gdwpm_halaman_utama() {
 	global $cek_kunci, $gdwpm_opt_akun, $gdwpm_service, $gdwpm_apiConfig;
+require_once 'gdwpm-api/Google_Client.php';
+require_once 'gdwpm-api/contrib/Google_DriveService.php';
+
 $cek_kunci = 'true'; // kosong
+if(isset($_REQUEST['gdwpm_opsi_kategori_nonce'])){
+	require_once(ABSPATH .'wp-includes/pluggable.php');
+	if(!wp_verify_nonce( $_REQUEST['gdwpm_opsi_kategori_nonce'], 'gdwpm_override_dir' )) {
+		wp_die( '<div class="error"><p>Security check not verified!</p></div>' ); 
+	} else {
+		if($_POST['gdwpm_cekbok_opsi_kategori'] == 1){
+			update_option('gdwpm_opsi_kategori_dr_folder', 'checked');
+			echo '<div class="updated"><p>GDWPM Categories has been enabled.</p></div>';
+		}else{
+			update_option('gdwpm_opsi_kategori_dr_folder', '');
+			echo '<div class="updated"><p>GDWPM Categories has been disabled.</p></div>';
+		}
+	}
+}
+
+if(isset($_REQUEST['gdwpm_opsi_chunkpl_nonce'])){
+	require_once(ABSPATH .'wp-includes/pluggable.php');
+	if(!wp_verify_nonce( $_REQUEST['gdwpm_opsi_chunkpl_nonce'], 'gdwpm_chunkpl_nonce' )) {
+		wp_die( '<div class="error"><p>Security check not verified!</p></div>' ); 
+	} else {
+		$input_cek = true;
+		$input_chunkarr = array('gdwpm_drive_chunk_size', 'gdwpm_drive_chunk_retries', 'gdwpm_local_chunk_size', 'gdwpm_local_chunk_retries');
+		foreach($input_chunkarr as $val){
+			if(!ctype_digit($_POST[$val])){
+				$input_cek = false;
+				break;
+			}
+		}
+		if($input_cek){
+			if (isset($_POST['gdwpm_cekbok_opsi_chunkpl'])) {$ceket = 'checked';}else{$ceket = '';}
+			update_option('gdwpm_opsi_chunk', array('local' => array('cekbok' => $ceket, 'chunk' => $_POST['gdwpm_local_chunk_size'], 'retries' => $_POST['gdwpm_local_chunk_retries']), 'drive' => array('cekbok' => 'checked', 'chunk' => $_POST['gdwpm_drive_chunk_size'], 'retries' => $_POST['gdwpm_drive_chunk_retries'])));
+			echo '<div class="updated"><p>Chunking Settings saved.</p></div>';
+		}else{
+			echo '<div class="error"><p>Chunking Settings cannot be saved. You must provide Numeric value.</p></div>';
+		}
+	}
+}
 	if (isset($_POST['gdwpm_akun_nonce']))
 	{
 		$nonce = $_POST['gdwpm_akun_nonce'];
@@ -502,7 +568,8 @@ if (isset($_POST['gdwpm_buang_berkas_terpilih']))
 			$gdwpm_info_files = '';
 			if (is_array($_POST['gdwpm_buang_berkas_terpilih'])) {
 				foreach($_POST['gdwpm_buang_berkas_terpilih'] as $value){
-					$gdwpm_berkas_terpilih_array = explode(' | ', $value); // mime, name, id, desc, folder
+					//$gdwpm_berkas_terpilih_array = explode(' | ', $value); // mime, name, id, desc, folder, pptis
+					$gdwpm_berkas_terpilih_array = json_decode(base64_decode($value), true);
 					$gdwpm_tong_sampah = $gdwpm_service->buangFile( $gdwpm_berkas_terpilih_array[2] );
 					if($gdwpm_tong_sampah){
 						$gdwpm_info_files .= '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> deleted, ';
@@ -512,7 +579,8 @@ if (isset($_POST['gdwpm_buang_berkas_terpilih']))
 					//sleep(0.5);
 				}
 			} else {
-				$gdwpm_berkas_terpilih_array = explode(' | ', $_POST['gdwpm_buang_berkas_terpilih']); // mime, name, id, desc, folder
+				//$gdwpm_berkas_terpilih_array = explode(' | ', $_POST['gdwpm_buang_berkas_terpilih']); // mime, name, id, desc, folder, pptis
+				$gdwpm_berkas_terpilih_array = json_decode(base64_decode($_POST['gdwpm_buang_berkas_terpilih']), true);
 				$gdwpm_tong_sampah = $gdwpm_service->buangFile( $gdwpm_berkas_terpilih_array[2] );
 				if($gdwpm_tong_sampah){
 					$gdwpm_info_files = '<strong>' . $gdwpm_berkas_terpilih_array[1] . '</strong> deleted, ';
@@ -596,7 +664,16 @@ jQuery(function() {
 		beforeLoad: function( event, ui ) {
 			ui.jqXHR.error(function() {
 				ui.panel.html(
-				"Opening Themes Setting tab, please wait..<p>If this take too long, there's something wrong with your internet connection.<br/>Well, don't be bad.. it's just a guess. :)</p>" );
+				"Opening Themes Setting tab, please wait..<p>If this take too long, there's something wrong with your internet connection.:)</p>" );
+			});
+		}	
+    });
+	
+	jQuery( "#gdwpm-albums" ).tabs({
+		beforeLoad: function( event, ui ) {
+			ui.jqXHR.error(function() {
+				ui.panel.html(
+				"Opening Albums tab, please wait..<p>If this take too long, there's something wrong with your internet connection.</p>" );
 			});
 		}	
     });
@@ -663,6 +740,7 @@ div.halpager span.active {
 }
 #pilihMaxRes { width: 110px; }
 #pilihMaxResdel { width: 140px; }
+#pilihMaxResgal { width: 140px; }
 #folder_pilian{ width: 200px; }
   .overflowpil { max-height: 370px; }
 #folder_pilian_aplod { width: 190px; }
@@ -673,7 +751,16 @@ div.halpager span.active {
   .overflowrep { max-height: 300px; }
 #folder_pilian_file_del { width: 220px; }
   .overflowdel { max-height: 360px; }
+#folder_pilian_file_gal { width: 220px; }
+  .overflowgal { max-height: 370px; }
+#old_album { width: 180px; }
+  .overflowolal { max-height: 370px; }
+#css_style, #css_style_default, #css_justified_margins, #css_justified_row, #css_justified_last { width: 120px; }
+#css_effect, #gallery_jquery { width: 140px; } 
 h2:before { content: ""; display: block; background: url("<?php echo plugins_url( '/images/animation/icon-32x32.png', __FILE__ );?>") no-repeat; width: 32px; height: 32px; float: left; margin: 0 6px 0 15px; }
+#itemgal { margin: 5px 10px 5px 0; padding: 5px; float: left; width: 160px; text-align: center; }
+#itemgal img { height: 150px; width="auto"; }
+#itemgal input { margin-top: 5px; }
 </style>
 <?php
 	$gdwpm_apiConfig['use_objects'] = true;
@@ -736,11 +823,11 @@ if($cek_kunci == 'false'){ ?>
 <?php } ?>
 		</ul>
  <?php if (!empty($foldercek)) { ?>
-			<div id="tabs-1">
+			<div id="tabs-1" class="ui-helper-clearfix">
 				<div id="tombol-donat" class="ui-widget-content ui-corner-all" style="width:190px; float:right; padding:1em;">	
 					<p style="text-align: center;">Do you like this plugin?<br/>Please consider to:<br/><br/><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZZNNMX3NZM2G2" target="_blank">
 					<img src="https://www.paypal.com/en_US/i/btn/btn_donateCC_LG.gif" alt="Donate Button with Credit Cards" /></a><br/>or<br/><a href="https://wordpress.org/support/view/plugin-reviews/google-drive-wp-media?filter=5" target="_blank"><img src="<?php echo plugins_url( '/images/animation/5star-rating.png', __FILE__ );?>" alt="5 Star Rating" title="5 Star Rating" /></a><br/>Your supports help the plugin keep updated & maintained.
-					</p>	
+					</p>
 				</div>
 				<p style="display: flex; align-items: center;">Select folder: &nbsp;<?php echo str_replace(' disabled', '', $folderpil); ?>&nbsp; <select id="pilihMaxRes">
 				<?php for($i=1;$i<=10;$i++){$inum = $i * 10;?>
@@ -763,21 +850,19 @@ if($cek_kunci == 'false'){ ?>
 						<br/><?php //$gdwpm_opsi_thumbs = get_option('gdwpm_img_thumbs');
 						//print_r($gdwpm_opsi_thumbs);
 						?>
-						Link URL of your file: https://docs.google.com/uc?id=<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>&export=view <br/>
-						or you can use: https://www.googledrive.com/host/<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>
+						Link URL: https://docs.google.com/uc?id=<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>&export=view <br/>
+						or: https://www.googledrive.com/host/<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>
 						<br />
 						Preview: https://docs.google.com/file/d/<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>/preview
-						<br />
-						Google Docs Viewer: <br />https://docs.google.com/viewer?url=https%3A%2F%2Fdocs.google.com%2Fuc%3Fid%3D<code><strong>GOOGLE-DRIVE-FILE-ID</strong></code>%26export%3Dview<br/>
+						<br/><small>
 						* Replace <code><strong>GOOGLE-DRIVE-FILE-ID</strong></code> with your file ID. 
 						<?php
 							if(!isset($ebot)){$ebot = $gdwpm_service->getAbout();}
-							echo '<br /><br />Storage Usage<br />Total quota: '.size_format($ebot->getQuotaBytesTotal(), 2).'<br />
-							Quota Used: '.size_format($ebot->getQuotaBytesUsed(), 2).'<br />
-							Available: '.size_format($ebot->getQuotaBytesTotal() - $ebot->getQuotaBytesUsed(), 2).'<br />';
+							echo '<br /><br />Total quota: '.size_format($ebot->getQuotaBytesTotal(), 2).'<br />
+							Quota Used: '.size_format($ebot->getQuotaBytesUsed(), 2).'</small>';
 						?>
 					</span>
-				</p>		
+				</p>	
 				<div style="display: none" id="gdwpm_loading_gbr">
 				  <center><img src="<?php echo plugins_url( '/images/animation/gdwpm_loader_256.gif', __FILE__ );?>" /><br />Please wait...</center>
 				</div>
@@ -1075,6 +1160,118 @@ jQuery(function(){
 <?php } ?>
 		</div>
 	</div>
+ <?php if(!empty($foldercek)) { ?>
+		<h3>Galleries [Alpha: experimental]</h3>
+	<div>
+		<?php
+			$gdwpm_url_tab_albums = admin_url( 'admin-ajax.php?action=gdwpm_on_action&gdwpm_tabulasi=albums&gdwpm_tabulasi_albums_nonce=') . wp_create_nonce( "gdwpm_tabulasi_albums_nonce" );
+			$gdwpm_url_tab_galleries = admin_url( 'admin-ajax.php?action=gdwpm_on_action&gdwpm_tabulasi=galleries&gdwpm_tabulasi_galleries_nonce=') . wp_create_nonce( "gdwpm_tabulasi_galleries_nonce" );
+		?>
+		<div id="gdwpm-albums" style="margin:0 -12px 0 -12px;">
+			<ul>
+				<li><a href="<?php echo $gdwpm_url_tab_albums; ?>"><span style="float:left" class="ui-icon ui-icon-contact"></span>&nbsp;Albums</a></li>
+				<li><a href="<?php echo $gdwpm_url_tab_galleries; ?>"><span style="float:left" class="ui-icon ui-icon-image"></span>&nbsp;Galleries</a></li>
+				<li><a href="#gdwpm-albums-3"><span style="float:left" class="ui-icon ui-icon-cart"></span>&nbsp;Gallery Creator</a></li>
+			</ul>
+			<!-- <div id="gdwpm-albums-1"></div> -->
+			<!-- <div id="gdwpm-albums-2"></div> -->
+			<div id="gdwpm-albums-3">
+				<p style="display: flex; align-items: center;">Select folder: &nbsp;<?php echo str_replace('folder_pilian', 'folder_pilian_file_gal', $folderpil); ?> &nbsp;<select id="pilihMaxResgal">
+				<?php for($i=1;$i<=10;$i++){$inum = $i * 10;?>
+				<option value="<?php echo $inum;?>"><?php echo $inum;?> items/page</option>				
+				<?php } ?>
+				</select> &nbsp;<button id="gdwpm_file_gallery" name="gdwpm_file_gallery"><?php _e('Get Files') ?></button> &nbsp;&nbsp;
+				<p>		
+				<p>
+					<span class="sukses_gal">Please select folder and click Get Files, to show all files belongs to it.
+				</span>
+				</p>
+				<div style="display: none" id="gdwpm_loading_gbr_gal">
+				  <center><img src="<?php echo plugins_url( '/images/animation/gdwpm_loader_256.gif', __FILE__ );?>" /><br />Please wait...</center>
+				</div>
+				<div id="hasil_gal"></div>
+				<div id="vaginasi_gal" style="text-align:center;margin-top:25px;"></div>
+				<div style="display: none" id="gdwpm_masuk_gallery_teks"><p>Collect your images to create a new Gallery.</p>
+					<p><span style="display: none" id="gdwpm_masuk_gallery_anim">
+							<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
+						</span>
+						<button id="gdwpm_berkas_masuk_gallery" name="gdwpm_berkas_masuk_gallery">Add to Collector</button>&nbsp;&nbsp;&nbsp; 
+						<span style="display: none" id="gdwpm_add_to_gal_gbr">
+							<img src="<?php echo plugins_url( '/images/animation/loading-bar-image.gif', __FILE__ );?>" />
+						</span>
+						<span id="gdwpm_info_masuk_gallery"></span>
+					</p>
+				</div>
+				<br/>
+				<div id="gallery_box" class="ui-widget-content ui-helper-clearfix ui-corner-all" style="padding:1em 1em 3em 1em;position:relative;">
+					<div class="ui-corner-all ui-widget-header" style="margin-bottom:20px;padding:0.5em;text-align:center;">Collector</div>
+					<div id="gallery_holder">
+					</div>
+					<span id="gallery_box_info" style="display:none;position:absolute;bottom:5px;right:15px;">
+						<small style="opacity:0.5;"><i>*Drag to reorder.</i></small>
+					</span>
+				</div>
+				<br/>
+				<div id="gallery_input" style="display:none;">
+					<p id="gal_intermezo" style="text-align:center;">Your Gallery is ready to be published..</p>
+					 <span style="display: flex; align-items: center;"><label for="gallery_category" style="display:inline-block;width:110px;">Album </label>: &nbsp;<select id="old_album">
+					<?php
+						$terms = get_terms( 'gdwpm_album' );
+						if ( ! empty( $terms ) && ! is_wp_error( $terms ) ){
+							foreach ( $terms as $term ) {
+					?>		
+						<option value="<?php echo $term->name;?>"><?php echo $term->name;?></option>				
+					<?php 	}
+						}else{ ?>
+						<option value="Uncategorized">Uncategorized</option>				
+					<?php } ?>	
+					</select> &nbsp;or create a new album : &nbsp;<input type="text" name="new_album" id="new_album" value="" size="16" placeholder="New Album Name" />
+					</span><br/>
+					<label for="gallery_title" style="display:inline-block;width:110px;">Title </label>: <input type="text" name="gallery_title" id="gallery_title" value="" size="60" placeholder="Gallery Title" />
+					<br/><br/>
+					<span style="display: flex; align-items: center;">
+					<label for="gallery_style" style="display:inline-block;width:110px;">Images List </label>: &nbsp;<select id="css_style"><option value="default">Default</option><option value="justified">Justified</option></select></span>
+					<br/>	
+					<span id="css_style_opt" style="display: flex; align-items: center;">
+						<label for="css_style_default" style="margin-left:140px;display:inline-block;width:150px;">Number of columns </label>: &nbsp;<select id="css_style_default">
+						<?php for($kenyot=3;$kenyot<10;$kenyot++){ ?>
+							<option value="<?php echo $kenyot;?>"><?php echo $kenyot;?></option><?php } ?></select>
+					</span>
+					
+					<span id="css_style_opt1">
+						<span style="display: flex; align-items: center;">
+							<label for="css_justified_margins" style="margin-left:140px;display:inline-block;width:100px;">margins</label>:&nbsp;<select id="css_justified_margins"><?php for($ciblek=1;$ciblek<11;$ciblek++){ ?>
+							<option value="<?php echo $ciblek;?>"><?php echo $ciblek;?> px</option><?php } ?></select>
+						</span><br/>
+						<span style="display: flex; align-items: center;">
+							<label for="css_justified_row" style="margin-left:140px;display:inline-block;width:100px;">rowHeight</label>:&nbsp;<select id="css_justified_row"><?php for($jemek=5;$jemek<20;$jemek++){ ?>
+							<option value="<?php echo $jemek * 10;?>"><?php echo $jemek * 10;?> px</option><?php } ?>
+							</select>
+						</span><br/>
+						<span style="display: flex; align-items: center;">
+							<label for="css_justified_last" style="margin-left:140px;display:inline-block;width:100px;">lastRow</label>:&nbsp;<select id="css_justified_last"><option value="justify">Justify</option><option value="nojustify">Nojustify</option><option value="hide">Hide</option></select>
+						</span>
+					</span>
+					<br/>					
+					<span style="display: flex; align-items: center;">
+					<label for="css_effect" style="display:inline-block;width:110px;">Effect </label>: &nbsp;<select id="css_effect"><option value="default">Default</option><option value="blackwhite">Black & White</option><option value="lighthover">Light on Hover</option></select>
+					</span><br/>
+					
+					<span style="display: flex; align-items: center;">
+					<label for="gallery_jquery" style="display:inline-block;width:110px;">Image Viewer </label>: &nbsp;<select id="gallery_jquery"><option value="lightbox">Lightbox</option></select>
+					</span><br/><br/>
+					<input type="hidden" id="gallery_id_edit" value="" />
+					<button id="gdwpm_new_gallery" class="gdwpm_bikin_gallery">Create Gallery</button>
+					<button id="gdwpm_edit_gallery" class="gdwpm_bikin_gallery" style="display:none;">Update Gallery</button>
+					<span style="margin-left:300px;" id="gdwpm_reset_gallery"><a href="#"><small>Reset / Cancel</small></a></span>
+				</div>
+				<div id="gdwpm_creating_128" style="display:none;text-align:center;">
+				<img src="<?php echo plugins_url( '/images/animation/gdwpm_loader_128.gif', __FILE__ );?>"><br/>Please wait..</div>
+				<div id="gallery_input_info">		</div>
+			</div>
+		</div>
+	</div>
+<?php } ?>
 <?php } ?>
 		<h3>Settings</h3>
 	<div>
@@ -1178,23 +1375,25 @@ jQuery(function(){
 		<p>
 			If you do not find an answer there, please open a new thread in the WordPress Support Forums.
 		</p>
+		<p style="margin-top:57px;">
+			Special thanks to everyone for the donations, you are one of my reasons why this plugin is actively maintained and updated.
+		</p>
 		<p>
+			Thank You!
+		</p>
+		<small>
 			Credits:
 			<ul>
 				<li>Google Drive API & products are owned by Google inc.</li> 
 				<li>Table Style credit to R. Christie (SmashingMagazine).</li> 
 				<li>DriveServiceHelper Class credit to Lukasz Kujawa.</li> 
 				<li>JQuery Upload credit to PLUpload by Moxiecode Systems AB.</li> 
-				<li>JQuery User Interface credit to JQueryUI.</li> 
-				<li>Alternative openssl sign function credit to Rochelle Alder.</li> 
+				<li>JQuery User Interface by JQueryUI.</li> 
+				<li>Alternative openssl sign function by Rochelle Alder.</li> 
+				<li>Lightbox by Lokesh Dhakar.</li> 
+				<li>Justified Gallery by Miro Mannino.</li> 
 			</ul>
-		</p>
-		<p style="margin-top:57px;">
-			Donations and good ratings encourage me to further develop the plugin and to provide countless hours of support. <br />Any amount is appreciated! 
-		</p>
-		<p>
-			Thank You!
-		</p>
+		</small>
 	</div>
 </div>
 <div id="dialog-message" title="Warning" style="display: none;">
@@ -1217,10 +1416,18 @@ jQuery(function(){
   </p>
 </div>
 <script>
-   function gantiBaris() {
-    var selectBox = document.getElementById("pilihBaris");
-    var jumlahBaris = selectBox.options[selectBox.selectedIndex].value;
-    jumBaris(jumlahBaris);
+   function gantiBaris(sel, tableid) {
+    var jumlahBaris = sel.value;
+    jumBaris(jumlahBaris, tableid);
+   }
+   function remove_itemgal(e) {
+		e.parentNode.parentNode.removeChild(e.parentNode);
+		if (jQuery('#gallery_holder > div').length > 1){
+			jQuery('#gallery_input').show();
+		}else{
+			jQuery('#gallery_input').hide();
+			jQuery('#gallery_box_info').hide();
+		}
    }
 
   jQuery(function() {
@@ -1247,7 +1454,9 @@ jQuery(function(){
       }
     });
   
-    jQuery( "#golek_seko_folder" )
+    jQuery( "#gallery_holder" ).sortable()
+    jQuery( "#gallery_holder" ).disableSelection()
+    jQuery( "#golek_seko_folder, #gdwpm_file_dr_folder, #gdwpm_file_gallery" )
       .button({
       icons: {
         primary: "ui-icon-circle-arrow-s"
@@ -1258,13 +1467,6 @@ jQuery(function(){
       .button({
       icons: {
         primary: "ui-icon-trash"
-      }
-    })
-  
-    jQuery( "#gdwpm_file_dr_folder" )
-      .button({
-      icons: {
-        primary: "ui-icon-circle-arrow-s"
       }
     })
 	
@@ -1286,6 +1488,20 @@ jQuery(function(){
       .button({
       icons: {
         primary: "ui-icon-circle-plus"
+      }
+    })
+	
+    jQuery( "#gdwpm_berkas_masuk_gallery" )
+      .button({
+      icons: {
+        primary: "ui-icon-cart"
+      }
+    })
+	
+    jQuery( ".gdwpm_bikin_gallery" )
+      .button({
+      icons: {
+        primary: "ui-icon-image"
       }
     })
 	
@@ -1334,6 +1550,8 @@ jQuery(function(){
 	  .selectmenu();
 	jQuery( "#pilihMaxResdel" )
 	  .selectmenu();
+	jQuery( "#pilihMaxResgal" )
+	  .selectmenu();
 	  
 	jQuery( "#folder_pilian" )
 	  .selectmenu()
@@ -1355,6 +1573,26 @@ jQuery(function(){
 	  .selectmenu()
 	  .selectmenu( "menuWidget" )
 		.addClass( "overflowdel" );
+	jQuery( "#folder_pilian_file_gal" )
+	  .selectmenu()
+	  .selectmenu( "menuWidget" )
+		.addClass( "overflowgal" );
+	jQuery( "#old_album, #css_effect, #css_style_default, #css_justified_margins, #css_justified_row, #css_justified_last, #gallery_jquery" )
+	  .selectmenu()
+	  .selectmenu( "menuWidget" )
+		.addClass( "overflowolal" );
+	jQuery( "#css_style" )
+	  .selectmenu({ change: function( event, ui ) { 
+		if(jQuery( this ).val() == 'default'){
+			jQuery('#css_style_opt').show();
+			jQuery('#css_style_opt1').hide();
+		}else{
+			jQuery('#css_style_opt').hide();
+			jQuery('#css_style_opt1').show();
+		}
+	}})
+	  .selectmenu( "menuWidget" )
+		.addClass( "overflowolal" );
 <?php } ?>
 	jQuery('input').addClass("ui-corner-all");
   });
@@ -1445,6 +1683,8 @@ add_action( 'wp_ajax_gdwpm_on_action', 'gdwpm_action_callback' );
 function gdwpm_action_callback() {
 	global $wpdb, $cek_kunci, $gdwpm_opt_akun, $gdwpm_service, $gdwpm_apiConfig;
 	$gdwpm_opt_akun = get_option('gdwpm_akun_opt'); // imel, client id, gdwpm_service akun, private key
+	require_once 'gdwpm-api/Google_Client.php';
+	require_once 'gdwpm-api/contrib/Google_DriveService.php';
 
 	if(isset($_POST['folder_pilian'])){
 	$gdwpm_apiConfig['use_objects'] = true;
@@ -1470,9 +1710,36 @@ function gdwpm_action_callback() {
 				echo '<div class="sukses"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>This folder is empty.</p></div>';
 			}
 		}else{		
-			echo '<div class="sukses"><p>Folder ID: <strong>'.$fld.'</strong> and items on page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris" onchange="gantiBaris();"><option value="5">5 rows/sheet</option><option value="10" selected="selected">10 rows/sheet</option>   <option value="15">15 rows/sheet</option><option value="20">20 rows/sheet</option><option value="25">25 rows/sheet</option><option value="30">30 rows/sheet</option><option value="40">40 rows/sheet</option><option value="50">50 rows/sheet</option></select></p></div>';	
+			echo '<div class="sukses"><p>Folder ID: <strong>'.$fld.'</strong> and items on page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris" onchange="gantiBaris(this, \'paginasi\');"><option value="5">5 rows/sheet</option><option value="10" selected="selected">10 rows/sheet</option>   <option value="15">15 rows/sheet</option><option value="20">20 rows/sheet</option><option value="25">25 rows/sheet</option><option value="30">30 rows/sheet</option><option value="40">40 rows/sheet</option><option value="50">50 rows/sheet</option></select></p></div>';	
 			echo $daftar_berkas[0];
-		}		
+		}
+	}elseif(isset($_POST['folder_pilian_file_gal'])){
+	$gdwpm_apiConfig['use_objects'] = true;
+	$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
+		$fld = $_POST['folder_pilian_file_gal'];
+		if(isset($_POST['pagetoken'])){
+			$daftar_berkas = $gdwpm_service->getFilesInFolder($fld, $_POST['pilmaxres'], $_POST['pagetoken'], 'gall');
+		}else{
+			$daftar_berkas = $gdwpm_service->getFilesInFolder($fld, $_POST['pilmaxres'], null, 'gall');
+		}
+		
+		//array($daftarfile, $i, $totalhal, $halterlihat)
+		if($daftar_berkas[1] <= 0){ // total files < 1
+			if($daftar_berkas[2] > 1){ // total halaman > 1
+				if($daftar_berkas[3] == $daftar_berkas[2]){
+					echo '<div class="sukses_gal"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>This page is empty.</p></div>';
+					echo $daftar_berkas[0];
+				}else{
+					echo '<div class="sukses_gal"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>Your request contains multiple pages, click the page number below.</p></div>';	
+					echo $daftar_berkas[0];
+				}
+			}else{
+				echo '<div class="sukses_gal"><p style="text-align:center;"><img src="' . plugins_url( '/images/animation/gdwpm_breaker_256.png', __FILE__ ) . '"><br/>This folder is empty.</p></div>';
+			}
+		}else{		
+			echo '<div class="sukses_gal"><p>Folder ID: <strong>'.$fld.'</strong> and items on page: <strong>'.$daftar_berkas[1].'</strong>.<select style="float:right;" id="pilihBaris_gal" onchange="gantiBaris(this, \'paginasi_gal\');"><option value="5">5 rows/sheet</option><option value="10" selected="selected">10 rows/sheet</option>   <option value="15">15 rows/sheet</option><option value="20">20 rows/sheet</option><option value="25">25 rows/sheet</option><option value="30">30 rows/sheet</option><option value="40">40 rows/sheet</option><option value="50">50 rows/sheet</option></select></p></div>';	
+			echo $daftar_berkas[0];
+		}				
 	}elseif(isset($_POST['folder_pilian_file_del'])){
 	$gdwpm_apiConfig['use_objects'] = true;
 	$gdwpm_service = new GDWPMBantuan( $gdwpm_opt_akun[1], $gdwpm_opt_akun[2], $gdwpm_opt_akun[3] );
@@ -1502,8 +1769,98 @@ function gdwpm_action_callback() {
 			echo $daftarfile;
 		}			
 		
+	}elseif(isset($_POST['dataimages'])){
+		// insert gallery
+		$unikid = strtotime("now");
+		$postjudul = base64_decode($_POST['judul']);
+		$postkat = base64_decode($_POST['album']);
+		$postkontenarr = explode(' , ', $_POST['dataimages']); 		
+		//$postkonten = "<div class='gdwpmgallery'>";		//lightbox
+		//$postkonten = '<div class="fotorama" data-allowfullscreen="native" data-loop="true" data-autoplay="true">';	//fotorama
+		if(isset($_POST['css_effect'])){
+			$css_effect = $_POST['css_effect']; //default/blackwhite/lighthover
+		}else{
+			$css_effect = 'default';
+		}
+		switch ($css_effect) {
+			case "default":
+				$efekgbr = '';
+				break;
+			case "blackwhite":
+				$efekgbr = ' gdwpm-bwefek';
+				break;
+			case "lighthover":
+				$efekgbr = ' gdwpm-lightefek';
+				break;
+			default:
+				$efekgbr = '';
+		}
+		if(isset($_POST['css_style'])){
+			$css_style = $_POST['css_style']; //default/blackwhite/lighthover
+		}else{
+			$css_style = 'default';
+		}
+		$jmlkolom = 3;
+		$justproper = '1 | 90 | justify';
+		if($css_style == 'justified'){
+			if(isset($_POST['css_style_justified'])){
+				$justproper = $_POST['css_style_justified'];
+			}
+			$postkonten = '<div id="gdwpmgal-'.$unikid.'" class="gdwpmGallery1'.$efekgbr.'" data-gal1="'.$justproper.'">'; //Justified + lightbox
+			$dataSource = array();
+			foreach($postkontenarr as $key => $val){// id, thumbid, flnme | captionimg
+				$indidata = explode(' | ', $val); 
+				$indidatadecode = json_decode(base64_decode($indidata[0]), true);
+				$captionimg = base64_decode($indidata[1]);
+				if($key == 0){$sampleImage = $indidatadecode[1];}
+				//$dataSource[] = array($indidatadecode[0], $indidatadecode[1]) . ' | ' . $captionimg;
+				//$postkonten .= '<div class="galleryItem"><a href="//www.googledrive.com/host/'.$indidatadecode[0].'" data-lightbox="'.$unikid.'" data-title="'.$captionimg.'"><img src="//www.googledrive.com/host/'.$thumbId.'" alt="'.$indidatadecode[1].'"/></a></div>';      //lightbox
+				//$postkonten .= '<a href="//www.googledrive.com/host/'.$thumbId.'" data-full="//www.googledrive.com/host/'.$indidatadecode[0].'" data-caption="'.$captionimg.'"></a>';	//fotorama
+				$boxttl = ''; $jusalt = '';
+				if(!empty($captionimg)){$boxttl = 'data-title="'.$captionimg.'" '; $jusalt = 'alt="'.$captionimg.'" ';}
+				$postkonten .= '<a href="https://www.googledrive.com/host/'.$indidatadecode[0].'" '.$boxttl.'data-lightbox="'.$unikid.'"><img '.$jusalt.'src="https://www.googledrive.com/host/'.$indidatadecode[1].'" /></a>';	//justified
+			}
+		}else{
+			if(isset($_POST['css_style_default'])){
+				$jmlkolom = $_POST['css_style_default'];
+			}
+			$postkonten = '<div class="gdwpmGallery0'.$efekgbr.' gallery gallery-columns-'.$jmlkolom.'">';
+			$dataSource = array();
+			foreach($postkontenarr as $key => $val){// id, thumbid, flnme | captionimg
+				$indidata = explode(' | ', $val); 
+				$indidatadecode = json_decode(base64_decode($indidata[0]), true);
+				$captionimg = base64_decode($indidata[1]);
+				if($key == 0){$sampleImage = $indidatadecode[1];}
+				$postkonten .= '<dl style="width:' . 100/$jmlkolom . '%;" class="gallery-item"><dt class="gallery-icon"><a href="https://www.googledrive.com/host/' .$indidatadecode[0]. '" data-lightbox="'.$unikid.'" data-title="'.$captionimg.'"><img class="attachment-thumbnail img-rounded" src="https://www.googledrive.com/host/'.$indidatadecode[1].'" alt="'. $indidatadecode[2] .'" width="200" /></a></dt><dd class="wp-caption-text gallery-caption">'.$captionimg.'</dd></dl>';
+				if($key > 0 && ($key + 1) % $jmlkolom == 0 || $key == (count($postkontenarr) - 1)){ $postkonten .= '<br style="clear: both" />'; }
+			}
+		}
+		$postkonten .= '</div>';
+		
+		//$postkonten = base64_decode($_POST['dataimages']);
+		
+		$gallery = array('post_title' => wp_strip_all_tags($postjudul), 'post_name' => sanitize_title_with_dashes($postjudul), 'post_content' => $postkonten, 'post_status'   => 'publish', 'post_author' => 1, 'post_type' => 'gdwpm_galleries');
+		if(empty($_POST['galid']) || $_POST['galid'] == ''){
+			$galeri_id = wp_insert_post($gallery);
+			$infokita = 'created';
+		}else{
+			$gallery['ID'] = $_POST['galid'];
+			$galeri_id = wp_update_post($gallery);
+			$infokita = 'saved';
+		}
+		if($galeri_id != 0){
+			wp_set_object_terms( $galeri_id, $postkat, 'gdwpm_album' );
+			update_post_meta( $galeri_id, 'sampleImage', $sampleImage );
+			$baseData = base64_encode(json_encode(array($galeri_id, wp_strip_all_tags($postjudul), $postkat, $css_style, $css_effect, 'lightbox', $jmlkolom, $justproper)));
+			$baseData .= ' items:' . $_POST['dataimages'];
+			update_post_meta( $galeri_id, 'base64data', $baseData );
+			echo '<strong>'.$postjudul.'</strong> successfully '.$infokita.'. Gallery ID: <strong>'.$galeri_id.'</strong>. Shortcode: <code>[gdwpm-gallery id="'.$galeri_id.'"]</code>. Permalink: <a href="' . get_permalink($galeri_id) . '" title="Open '.$postjudul.' in new window" target="_blank">' . get_permalink($galeri_id) . '</a>';
+		}else{
+			echo 'Cannot create gallery.';
+		}
 	}elseif(isset($_POST['masuk_perpus'])){
-		$gdwpm_berkas_terpilih_arr = explode(' | ', $_POST['masuk_perpus']);
+		//$gdwpm_berkas_terpilih_arr = explode(' | ', $_POST['masuk_perpus']);
+		$gdwpm_berkas_terpilih_arr = json_decode(base64_decode($_POST['masuk_perpus']), true);
 		gdwpm_ijin_masuk_perpus(sanitize_mime_type($gdwpm_berkas_terpilih_arr[0]), $gdwpm_berkas_terpilih_arr[1], $gdwpm_berkas_terpilih_arr[2], $gdwpm_berkas_terpilih_arr[3], $gdwpm_berkas_terpilih_arr[4], $gdwpm_berkas_terpilih_arr[5]);
 				
 		echo '<strong>'.$gdwpm_berkas_terpilih_arr[1] . '</strong> has been added to your Media Library';
@@ -1512,7 +1869,7 @@ function gdwpm_action_callback() {
 		$nonce = $_REQUEST['gdwpm_override_nonce'];
 		
 		if ( ! wp_verify_nonce( $nonce, 'gdwpm_override_dir' ) ) {
-			die('<strong>Oops... failed!</strong>'); 
+			wp_die('<strong>Oops... failed!</strong>'); 
 		} else {
 			if(!$gdwpm_ukuran_preview){$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview');}
 			if (ctype_digit($_POST['gdwpm_ukuran_preview_lebar']) && ctype_digit($_POST['gdwpm_ukuran_preview_tinggi'])) {
@@ -1541,7 +1898,7 @@ function gdwpm_action_callback() {
 		$nonce = $_REQUEST['gdwpm_override_nonce'];
 		
 		if ( ! wp_verify_nonce( $nonce, 'gdwpm_override_dir' ) ) {
-			die('<strong>Oops... failed!</strong>'); 
+			wp_die('<strong>Oops... failed!</strong>'); 
 		} else {
 			$folder_bawaan = preg_replace("/[^a-zA-Z0-9]+/", " ", $_POST['gdwpm_folder_opsi_value']);
 			$folder_bawaan = sanitize_text_field($folder_bawaan);
@@ -1567,33 +1924,58 @@ function gdwpm_action_callback() {
 		if($_REQUEST['gdwpm_tabulasi'] == 'opsyen'){
 			$nonce = $_REQUEST['gdwpm_tab_opsi_nonce'];
 			if ( ! wp_verify_nonce( $nonce, 'gdwpm_tab_opsi_key' ) ) {
-				die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+				wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
 			} else {
 				require_once 'google-drive-wp-media-options.php';
 			}
 		}elseif($_REQUEST['gdwpm_tabulasi'] == 'infosyen'){
 			$nonce = $_REQUEST['gdwpm_tab_info_nonce'];
 			if ( ! wp_verify_nonce( $nonce, 'gdwpm_tab_opsi_key' ) ) {
-				die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+				wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
 			} else {
 				require_once 'google-drive-wp-media-info.php';
 			}
 		}elseif($_REQUEST['gdwpm_tabulasi'] == 'apidoku'){
 			$nonce = $_REQUEST['gdwpm_tabulasi_nonce'];
 			if ( ! wp_verify_nonce( $nonce, 'gdwpm_tabulasi_ajax' ) ) {
-				die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+				wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
 			} else {
 				require_once 'google-drive-wp-media-documentation.php';
 			}
 		}elseif($_REQUEST['gdwpm_tabulasi'] == 'themeset'){
 			$nonce = $_REQUEST['gdwpm_tabulasi_themeset_nonce'];
 			if ( ! wp_verify_nonce( $nonce, 'gdwpm_tabulasi_themeset_nonce' ) ) {
-				die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+				wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
 			} else {
 				require_once 'google-drive-wp-media-themes.php';
 			}
+		}elseif($_REQUEST['gdwpm_tabulasi'] == 'albums'){
+			$nonce = $_REQUEST['gdwpm_tabulasi_albums_nonce'];
+			if ( ! wp_verify_nonce( $nonce, 'gdwpm_tabulasi_albums_nonce' ) ) {
+				wp_die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
+			} else {
+				require_once 'google-drive-wp-media-albums.php';
+			}
+		}elseif($_REQUEST['gdwpm_tabulasi'] == 'galleries'){
+			$nonce = $_REQUEST['gdwpm_tabulasi_galleries_nonce'];
+			if ( ! wp_verify_nonce( $nonce, 'gdwpm_tabulasi_galleries_nonce' ) ) {
+				wp_die('<div class="error"><p>Oops.. security check is not ok.</p></div>'); 
+			} else {
+				if(isset($_REQUEST['paged'])){
+					$paged = $_REQUEST['paged'];
+				}
+				if(isset($_REQUEST['delete'])){
+					$gdwpmbuang_gal = wp_delete_post(trim($_REQUEST['delete']), true);
+					if($gdwpmbuang_gal){
+						echo '<div class="updated"><p>Gallery ID="' . $_REQUEST['delete'] . '" successfully deleted.</p></div>';
+					}else{
+						echo '<div class="error"><p>Gallery ID="' . $_REQUEST['delete'] . '" cannot deleted!</p></div>';
+					}
+				}
+				require_once 'google-drive-wp-media-galleries.php';
+			}
 		}else{
-			die('<div class="error"><p>Oops.. something goes wrong!</p></div>'); 
+			wp_die('<div class="error"><p>Oops.. something goes wrong!</p></div>'); 
 		}
 	}elseif(isset($_POST['gdwpm_opsi_theme_css'])){
 		$nonce = $_REQUEST['gdwpm_theme_setting_nonce'];
@@ -1605,7 +1987,7 @@ function gdwpm_action_callback() {
 				update_option('gdwpm_nama_theme_css', $_POST['gdwpm_opsi_theme_css']);	
 				
 		}
-	}else{
+	}elseif(isset($_REQUEST['gdwpm_nonce_aplod_berkas'])){
 		$nonce = $_REQUEST['gdwpm_nonce_aplod_berkas'];
 		if ( ! wp_verify_nonce( $nonce, 'gdwpm_satpam_aplod_berkas' ) ) {
 			die('<div class="error"><p>Oops.. security check is not ok!</p></div>'); 
@@ -1815,26 +2197,26 @@ function gdwpm_action_callback() {
 			wp_die();
 		}
 	}
-	die();
+	wp_die();
 }
 
 class GDWPMBantuan {
         
-        protected $scope = array('https://www.googleapis.com/auth/drive');
+    protected $scope = array('https://www.googleapis.com/auth/drive');
         
-        private $_service;
+    private $_service;
         
         public function __construct( $clientId, $serviceAccountName, $key ) {
-                $client = new Google_Client();
-                $client->setClientId( $clientId );
-                
-                $client->setAssertionCredentials( new Google_AssertionCredentials(
-                                $serviceAccountName,
-                                $this->scope,
-                                $this->getKonten( $key ) )
-                );
-                
-                $this->_service = new Google_DriveService($client);
+				$client = new Google_Client();
+				$client->setApplicationName("Google Drive WP Media");
+				$client->setClientId( $clientId );
+			
+				$client->setAssertionCredentials( new Google_AssertionCredentials(
+									$serviceAccountName,
+									$this->scope,
+									$this->getKonten( $key ) )
+				);
+            $this->_service = new Google_DriveService($client);
         }
         
         public function __get( $name ) {
@@ -1854,7 +2236,7 @@ class GDWPMBantuan {
 				curl_close($data);
 				return $hasil;
 			}else{
-				$hasil = @file_get_contents(str_replace(' ', '%20', $url));
+				$hasil = file_get_contents(str_replace(' ', '%20', $url));
 				return $hasil;
 			}
         }
@@ -1974,7 +2356,7 @@ class GDWPMBantuan {
 				$div_pagi = 'vaginasi';
 				$opsi_kecing = 'gdwpm_kecing_hal';
 				$in_name = 'gdwpm_berkas_terpilih[]';
-			}else{
+			}elseif($in_type == 'checkbox'){
 				$div_id = 'hasil_del';
 				$id_max = 'maxres_del';
 				$id_folid = 'folid_del';
@@ -1983,6 +2365,16 @@ class GDWPMBantuan {
 				$div_pagi = 'vaginasi_del';
 				$opsi_kecing = 'gdwpm_kecing_hal_del';
 				$in_name = 'gdwpm_buang_berkas_terpilih[]';
+			}else{
+				$in_type = 'checkbox';
+				$div_id = 'hasil_gal';
+				$id_max = 'maxres_gal';
+				$id_folid = 'folid_gal';
+				$id_tblpagi = 'paginasi_gal';
+				$div_hal = 'halaman_gal';
+				$div_pagi = 'vaginasi_gal';
+				$opsi_kecing = 'gdwpm_kecing_hal_gal';
+				$in_name = 'gdwpm_berkas_gallery[]';
 			}
 			//setup 1st pagetokn is always enpty n create pagintion butt
 			$haldepan = 1;
@@ -2059,9 +2451,18 @@ class GDWPMBantuan {
 							$view = '<a href="https://www.googledrive.com/host/'.$fileId.'" title="Open link in a new window" target="_blank" class="tabeksen">View</a>';
 							$properties = $this->_service->properties->listProperties($fileId);
 							$getfile_pptis = $properties->getItems();
-							if(count($getfile_pptis) > 0){$file_pptis = $getfile_pptis[0]->getValue(); }
+							if(count($getfile_pptis) > 0){
+								$file_pptis = $getfile_pptis[0]->getValue();
+								// selfWidth:xx selfHeight:xx thumbId:xxx thumbWidth:xx thumbHeight:xx
+								preg_match_all('/(\w+):("[^"]+"|\S+)/', $file_pptis, $matches);
+								$img_meta = array_combine($matches[1], $matches[2]);
+								if(array_key_exists('thumbId', $img_meta)){
+									$file_thumb = 'https://www.googledrive.com/host/' . $img_meta['thumbId'];
+								}
+							}
 						} 
-						$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.$file_mime.' | '.$file_title.' | '.$fileId.' | '.$file_desc.' | '.$folder_name.' | '.$file_pptis.'" ' . $checked . '></td><td class="kolom_file" title="' . $file_thumb . '">'.$fileId.'</td>';
+						$valson = json_encode(array($file_mime, $file_title, $fileId, $file_desc, $folder_name, $file_pptis));
+						$daftarfile .=  '<tbody><tr><td><input type="'.$in_type.'" name="'.$in_name.'" value="'.base64_encode($valson).'" ' . $checked . '></td><td class="kolom_file" title="' . $file_thumb . '">'.$fileId.'</td>';
 						$daftarfile .=  '<td title="' . $file_desc . '"><img src="' . $file_icon . '" title="' . $file_mime . '"> ' . $file_title . '</td>';
 						$daftarfile .=  '<!--<td>' . $file_desc . '</td>-->';
 						$daftarfile .=  '<td title="md5Checksum : ' . $file_md5 . '">' . $file_size . '</td>';
@@ -2111,6 +2512,39 @@ add_action('media_buttons', 'gdwpm_preview_button', 12);
 function gdwpm_preview_button() {
     echo '<a href="#" id="masukin-sotkode" class="button"><img src="' . plugins_url( '/images/animation/gdwpm-insert-shortcode.png', __FILE__ ) . '"/>GDWPM Shortcode</a>';
 }
+add_action('wp_print_scripts', 'gdwpm_register_scripts');
+add_action('wp_print_styles', 'gdwpm_register_styles');
+function gdwpm_register_scripts() {
+    if (!is_admin()) {
+        wp_register_script('gdwpm_lightbox-script', plugins_url('js/lightbox.js', __FILE__), array( 'jquery' ), VERSI_GDWPM, true );
+		// fotorama.Js
+		//wp_register_script('gdwpm_fotorama-script', "http://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.3/fotorama.js", array( 'jquery' ), VERSI_GDWPM, true );
+        wp_register_script('gdwpm_justified-script', plugins_url('js/justifiedGallery.js', __FILE__), array( 'jquery' ), VERSI_GDWPM, true );
+        wp_register_script('gdwpm_script-script', plugins_url('js/script.js', __FILE__), array( 'jquery' ), VERSI_GDWPM, true );
+        //wp_register_script('gdwpm_swipebox-script', plugins_url('libs/swipebox/jquery.swipebox.min.js', __FILE__), array( 'jquery' ), VERSI_GDWPM, true );
+
+		wp_enqueue_script('jquery');              
+        wp_enqueue_script('gdwpm_lightbox-script');
+		//wp_enqueue_script('gdwpm_fotorama-script');    
+		wp_enqueue_script('gdwpm_justified-script');     
+		wp_enqueue_script('gdwpm_script-script');      
+		//wp_enqueue_script('gdwpm_swipebox-script');   
+    }
+}
+function gdwpm_register_styles() {
+    wp_register_style('gdwpm_styles', plugins_url('css/lightbox.css', __FILE__));
+    wp_register_style('gdwpm_img_styles', plugins_url('css/images.css', __FILE__));
+	// fotorama.css
+	//wp_register_style('gdwpm_fotorama_styles', "http://cdnjs.cloudflare.com/ajax/libs/fotorama/4.6.3/fotorama.css");
+    wp_register_style('gdwpm_justified_styles', plugins_url('css/justifiedGallery.css', __FILE__));
+    //wp_register_style('gdwpm_swipebox_styles', plugins_url('libs/swipebox/swipebox.css', __FILE__));
+
+    wp_enqueue_style('gdwpm_styles');
+    wp_enqueue_style('gdwpm_img_styles');
+    //wp_enqueue_style('gdwpm_fotorama_styles');
+    wp_enqueue_style('gdwpm_justified_styles');
+    //wp_enqueue_style('gdwpm_swipebox_styles');
+}
 
 function gdwpm_activate() {
 	$gdwpm_ukuran_preview = get_option('gdwpm_ukuran_preview'); 	// default value lebar tinggi vidchecked vidauto vidlebar vidtinggi
@@ -2129,6 +2563,9 @@ function gdwpm_activate() {
 	if(empty($gdwpm_img_thumbs)){
 		update_option('gdwpm_img_thumbs', array('', '', '150', '150', 'false'));
 	}
+	// Flushing Rewrite on Activation
+	gdwpm_init();
+	flush_rewrite_rules();
 	
 	$upload_dir = wp_upload_dir();
 	$nama_ploder = 'gdwpm_images';
